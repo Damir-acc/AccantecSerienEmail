@@ -1,125 +1,98 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accantec Serien E-Mails</title>
-    <!-- Teams-ähnliches CSS-Design -->
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f3f2f1;
-            color: #201f1e;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
         }
-
-        .container {
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            width: 500px;
-        }
-
         h1 {
-            text-align: center;
-            color: #0078d4;
+            color: #333;
         }
-
+        form {
+            margin-bottom: 20px;
+        }
         label {
-            font-weight: bold;
+            display: block;
+            margin-top: 10px;
         }
-
         input[type="file"],
         input[type="text"],
         input[type="password"] {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #d3d3d3;
-            border-radius: 5px;
+            margin-top: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
         }
-
         input[type="submit"] {
-            background-color: #0078d4;
+            background-color: #28a745;
             color: white;
-            padding: 10px 20px;
             border: none;
-            border-radius: 5px;
+            padding: 10px;
+            border-radius: 4px;
             cursor: pointer;
-            font-weight: bold;
+            margin-top: 10px;
         }
-
         input[type="submit"]:hover {
-            background-color: #005a9e;
+            background-color: #218838;
         }
-
-        .messages {
-            margin: 20px 0;
+        ul {
+            list-style-type: none;
+            padding: 0;
         }
-
-        .success {
-            background-color: #dff0d8;
-            color: #3c763d;
+        .flash-message {
+            margin: 10px 0;
             padding: 10px;
+            background-color: #e9ffe9;
+            border: 1px solid #c3e6cb;
+            color: #155724;
             border-radius: 5px;
-            margin-bottom: 10px;
-        }
-
-        .error {
-            background-color: #f2dede;
-            color: #a94442;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Accantec Serien E-Mails</h1>
+    <h1>Accantec Serien E-Mails</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <label for="word_file">Word-Datei:</label>
+        <input type="file" name="word_file" required><br>
 
-        <!-- Anzeige der Flash-Nachrichten -->
-        <div class="messages">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        </div>
+        <label for="excel_file">Excel-Datei:</label>
+        <input type="file" name="excel_file" required><br>
 
-        <form method="POST" enctype="multipart/form-data">
-            <label for="word_file">Word-Datei:</label>
-            <input type="file" name="word_file" required><br>
+        <label for="signature_file">Signatur-Datei (HTML):</label>
+        <input type="file" name="signature_file" required><br>
 
-            <label for="excel_file">Excel-Datei:</label>
-            <input type="file" name="excel_file" required><br>
+        <label for="logo_file">Logo-Datei für Signatur:</label>
+        <input type="file" name="logo_file" required><br>
 
-            <label for="signature_file">Signatur-Datei (HTML):</label>
-            <input type="file" name="signature_file" required><br>
+        <label for="attachments">Anhänge:</label>
+        <input type="file" name="attachments" multiple><br>
 
-            <label for="logo_file">Logo-Datei für Signatur:</label>
-            <input type="file" name="logo_file" required><br>
+        <label for="email_user">E-Mail Benutzername:</label>
+        <input type="text" name="email_user" required><br>
 
-            <label for="attachments">Anhänge:</label>
-            <input type="file" name="attachments" multiple><br>
+        <label for="email_pass">E-Mail Passwort:</label>
+        <input type="password" name="email_pass" required><br>
 
-            <label for="email_user">E-Mail Benutzername:</label>
-            <input type="text" name="email_user" required><br>
+        <input type="submit" value="Senden">
+    </form>
 
-            <label for="email_pass">E-Mail Passwort:</label>
-            <input type="password" name="email_pass" required><br>
-
-            <input type="submit" value="Senden">
-        </form>
-    </div>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li class="flash-message">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
 </body>
 </html>

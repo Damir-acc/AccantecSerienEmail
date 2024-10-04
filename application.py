@@ -86,10 +86,11 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
 
     # Content-ID für das Logo definieren (für Einbettung)
     logo_cid = 'logo_cid'
-
+    
     # Bearbeite die Signatur, um den neuen Logo-Pfad mit cid einzufügen
     updated_signature = edit_signature(signature, logo_cid)
 
+    total_emails = len(email_data)
     for index, row in email_data.iterrows():
         nachname = row['Nachname']
         vorname = row['Vorname']
@@ -144,17 +145,19 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                 print(f'Anhang für {email} konnte nicht hinzugefügt werden. Datei "{attachment_path}" nicht gefunden oder ist das Logo.')
 
         try:
+            # E-Mail über den SMTP-Server senden
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.starttls()  # TLS aktivieren
                 server.login(username, password)
                 server.send_message(msg)
 
-            # Erfolgsmeldung hier hinzufügen
-            flash(f'E-Mail an {email} erfolgreich gesendet.', 'success')
+            # Flash-Nachricht für den Versand der E-Mail
+            flash(f"E-Mail an {email} wurde erfolgreich gesendet. ({index + 1}/{total_emails})")
+            print(f"E-Mail an {email} gesendet.")
 
         except Exception as e:
-            # Fehlermeldung ebenfalls per Flash
-            flash(f"Fehler beim Senden der E-Mail an {email}: {e}", 'error')
+            print(f"Fehler beim Senden der E-Mail an {email}: {e}")
+            flash(f"Fehler beim Senden der E-Mail an {email}: {str(e)}")
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
