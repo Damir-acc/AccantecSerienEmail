@@ -91,6 +91,10 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     email_data = read_excel_data(excel_file_path)
     signature = load_signature(signature_path)
 
+    # Setze Statusmeldungen und Fortschritt zurück, wenn die Seite geladen wird
+    status_messages = []
+    progress_percentage = 0
+
     # Content-ID für das Logo definieren (für Einbettung)
     logo_cid = 'logo_cid'
 
