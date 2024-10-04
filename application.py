@@ -8,16 +8,17 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
-from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_socketio import SocketIO, emit
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
-socketio = SocketIO(app)
 
 # Definiere den Upload-Ordner
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Erstellt den Ordner, falls er nicht existiert
+
+# Liste zur Speicherung der Statusmeldungen
+status_messages = []
 
 # Funktion zum Lesen des Word-Dokuments und Extrahieren von Text und Hyperlinks
 def read_word_file_with_hyperlinks(word_file_path):
@@ -92,7 +93,6 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     # Bearbeite die Signatur, um den neuen Logo-Pfad mit cid einzufügen
     updated_signature = edit_signature(signature, logo_cid)
 
-    total_emails = len(email_data)
     for index, row in email_data.iterrows():
         nachname = row['Nachname']
         vorname = row['Vorname']
@@ -153,14 +153,11 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                 server.login(username, password)
                 server.send_message(msg)
 
-            print(f"E-Mail an {email} gesendet.")
-            
-            # Sende eine Statusnachricht über Websockets
-            socketio.emit('email_status', {'message': f'E-Mail an {email} wurde erfolgreich gesendet.'})
+            # Statusmeldung hinzufügen
+            status_messages.append(f"E-Mail an {email} gesendet.")
 
         except Exception as e:
-            print(f"Fehler beim Senden der E-Mail an {email}: {e}")
-            socketio.emit('email_status', {'message': f'Fehler beim Senden an {email}: {str(e)}'})
+            status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {e}")
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
@@ -197,11 +194,14 @@ def upload_files():
         smtp_port = 587
 
         send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path)
-        flash('E-Mails wurden erfolgreich gesendet!')
 
         return redirect(url_for('upload_files'))
 
     return render_template('index.html')
 
+@app.route('/api/status', methods=['GET'])
+def get_status():
+    return jsonify(status_messages), 200
+
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000)

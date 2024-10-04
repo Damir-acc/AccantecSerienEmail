@@ -2,67 +2,62 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accantec Serien E-Mails</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 </head>
 <body>
-    <div class="container mt-5">
+    <div class="container">
         <h1>Accantec Serien E-Mails</h1>
-        <form method="POST" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="word_file">Word-Datei:</label>
-                <input type="file" class="form-control" name="word_file" required>
+                <input type="file" class="form-control-file" name="word_file" required>
             </div>
-
             <div class="form-group">
                 <label for="excel_file">Excel-Datei:</label>
-                <input type="file" class="form-control" name="excel_file" required>
+                <input type="file" class="form-control-file" name="excel_file" required>
             </div>
-
             <div class="form-group">
-                <label for="signature_file">Signatur-Datei (HTML):</label>
-                <input type="file" class="form-control" name="signature_file" required>
+                <label for="signature_file">Signatur-Datei:</label>
+                <input type="file" class="form-control-file" name="signature_file" required>
             </div>
-
             <div class="form-group">
-                <label for="logo_file">Logo-Datei für Signatur:</label>
-                <input type="file" class="form-control" name="logo_file" required>
+                <label for="logo_file">Logo-Datei:</label>
+                <input type="file" class="form-control-file" name="logo_file" required>
             </div>
-
             <div class="form-group">
-                <label for="attachments">Zusätzliche Anhänge:</label>
-                <input type="file" class="form-control" name="attachments" multiple>
-            </div>
-
-            <div class="form-group">
-                <label for="email_user">E-Mail-Benutzername:</label>
+                <label for="email_user">E-Mail Benutzername:</label>
                 <input type="email" class="form-control" name="email_user" required>
             </div>
-
             <div class="form-group">
-                <label for="email_pass">E-Mail-Passwort:</label>
+                <label for="email_pass">E-Mail Passwort:</label>
                 <input type="password" class="form-control" name="email_pass" required>
             </div>
-
+            <div class="form-group">
+                <label for="attachments">Anhänge (optional):</label>
+                <input type="file" class="form-control-file" name="attachments" multiple>
+            </div>
             <button type="submit" class="btn btn-primary">E-Mails senden</button>
         </form>
 
-        <h2 class="mt-4">Statusmeldungen:</h2>
+        <h2>Statusmeldungen:</h2>
         <ul id="statusMessages" class="list-group"></ul>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
     <script>
-        $(document).ready(function() {
-            const socket = io();
-
-            socket.on('email_status', function(data) {
-                $('#statusMessages').append(`<li class="list-group-item">${data.message}</li>`);
+        function fetchStatusMessages() {
+            $.get('/api/status', function(data) {
+                $('#statusMessages').empty();
+                data.forEach(function(message) {
+                    $('#statusMessages').append(`<li class="list-group-item">${message}</li>`);
+                });
             });
-        });
+        }
+
+        // Rufe die Funktion alle paar Sekunden auf
+        setInterval(fetchStatusMessages, 5000);
     </script>
 </body>
 </html>
