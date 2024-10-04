@@ -5,3 +5,5 @@ python-docx==1.1.1     # Für das Verarbeiten von Word-Dateien (.docx)
 openpyxl==3.0.9         # Zum Lesen von Excel-Dateien (für .xlsx)
 Werkzeug==2.1.2         # Werkzeug-Toolkit für Flask (für Datei-Uploads)
 gunicorn==20.1.0        # WSGI-HTTP-Server für die Bereitstellung der App
+Flask-SocketIO==5.3.0   # Für die SocketIO-Integration
+eventlet==0.33.3        # Für die Unterstützung von WebSockets

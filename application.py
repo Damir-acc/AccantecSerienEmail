@@ -9,9 +9,11 @@ from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
 from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
+socketio = SocketIO(app)
 
 # Definiere den Upload-Ordner
 UPLOAD_FOLDER = 'uploads'
@@ -86,15 +88,11 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
 
     # Content-ID für das Logo definieren (für Einbettung)
     logo_cid = 'logo_cid'
-    
+
     # Bearbeite die Signatur, um den neuen Logo-Pfad mit cid einzufügen
     updated_signature = edit_signature(signature, logo_cid)
 
     total_emails = len(email_data)
-    
-    # Füge diese Zeile hinzu, um die Gesamtsumme der E-Mails in Flash-Nachrichten zu setzen
-    flash(f'Start des E-Mail-Versands. Insgesamt {total_emails} E-Mails zu senden.')
-
     for index, row in email_data.iterrows():
         nachname = row['Nachname']
         vorname = row['Vorname']
@@ -155,13 +153,14 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                 server.login(username, password)
                 server.send_message(msg)
 
-            # Flash-Nachricht für den Versand der E-Mail
-            flash(f"E-Mail an {email} wurde erfolgreich gesendet. ({index + 1}/{total_emails})")
             print(f"E-Mail an {email} gesendet.")
+            
+            # Sende eine Statusnachricht über Websockets
+            socketio.emit('email_status', {'message': f'E-Mail an {email} wurde erfolgreich gesendet.'})
 
         except Exception as e:
             print(f"Fehler beim Senden der E-Mail an {email}: {e}")
-            flash(f"Fehler beim Senden der E-Mail an {email}: {str(e)}")
+            socketio.emit('email_status', {'message': f'Fehler beim Senden an {email}: {str(e)}'})
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
@@ -205,4 +204,4 @@ def upload_files():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000)
