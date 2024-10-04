@@ -5,7 +5,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accantec Serien E-Mails</title>
-    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
@@ -33,49 +32,36 @@
             </div>
 
             <div class="form-group">
-                <label for="attachments">Anhänge:</label>
+                <label for="attachments">Zusätzliche Anhänge:</label>
                 <input type="file" class="form-control" name="attachments" multiple>
             </div>
 
             <div class="form-group">
-                <label for="email_user">E-Mail Benutzername:</label>
-                <input type="text" class="form-control" name="email_user" required>
+                <label for="email_user">E-Mail-Benutzername:</label>
+                <input type="email" class="form-control" name="email_user" required>
             </div>
 
             <div class="form-group">
-                <label for="email_pass">E-Mail Passwort:</label>
+                <label for="email_pass">E-Mail-Passwort:</label>
                 <input type="password" class="form-control" name="email_pass" required>
             </div>
 
-            <button type="submit" class="btn btn-primary">Senden</button>
+            <button type="submit" class="btn btn-primary">E-Mails senden</button>
         </form>
 
-        <div id="status" class="mt-3"></div>
-
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="mt-3">
-                    <ul class="list-group">
-                        {% for message in messages %}
-                            <li class="list-group-item list-group-item-success">{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-        {% endwith %}
+        <h2 class="mt-4">Statusmeldungen:</h2>
+        <ul id="statusMessages" class="list-group"></ul>
     </div>
 
-    <!-- Bootstrap JS, jQuery, and Popper.js -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
     <script>
-        const socket = io();
+        $(document).ready(function() {
+            const socket = io();
 
-        socket.on('email_status', function(data) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerHTML += `<p>${data.message}</p>`;
+            socket.on('email_status', function(data) {
+                $('#statusMessages').append(`<li class="list-group-item">${data.message}</li>`);
+            });
         });
     </script>
 </body>
