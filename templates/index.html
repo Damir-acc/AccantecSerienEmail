@@ -10,47 +10,11 @@
     <div class="container mt-5">
         <h1>Accantec Serien E-Mails</h1>
 
-        <!-- Formular für den Dateiupload -->
         <form id="uploadForm" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label for="word_file" class="form-label">Word-Datei (.docx)</label>
-                <input class="form-control" type="file" id="word_file" name="word_file" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="excel_file" class="form-label">Excel-Datei (.xlsx)</label>
-                <input class="form-control" type="file" id="excel_file" name="excel_file" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="signature_file" class="form-label">Signatur-Datei</label>
-                <input class="form-control" type="file" id="signature_file" name="signature_file" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="logo_file" class="form-label">Logo-Datei</label>
-                <input class="form-control" type="file" id="logo_file" name="logo_file" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="email_user" class="form-label">E-Mail-Benutzer</label>
-                <input type="email" class="form-control" id="email_user" name="email_user" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="email_pass" class="form-label">E-Mail-Passwort</label>
-                <input type="password" class="form-control" id="email_pass" name="email_pass" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="attachments" class="form-label">Anhänge (optional)</label>
-                <input class="form-control" type="file" id="attachments" name="attachments" multiple>
-            </div>
-
+            <!-- Deine Formularfelder -->
             <button type="submit" class="btn btn-primary">E-Mails versenden</button>
         </form>
 
-        <!-- Fortschrittsbalken für den E-Mail-Versand -->
         <div id="progressSection" class="mt-3" style="display: none;">
             <h4>Fortschritt:</h4>
             <div class="progress">
@@ -58,7 +22,6 @@
             </div>
         </div>
 
-        <!-- Bereich für Statusmeldungen -->
         <div id="statusMessages" class="mt-3">
             <h4>Statusmeldungen:</h4>
             <ul id="statusList"></ul>
@@ -66,12 +29,11 @@
     </div>
 
     <script>
-        // Formular-Submit-Handler
         document.getElementById('uploadForm').addEventListener('submit', function(e) {
-            e.preventDefault();  // Verhindert die Standard-Aktion des Formulars
-            var formData = new FormData(this);  // Sammle die Formulardaten
+            e.preventDefault();
+            var formData = new FormData(this);
 
-            // Zeige den Fortschrittsbalken an
+            // Zeige den Fortschrittsbalken
             document.getElementById('progressSection').style.display = 'block';
 
             // AJAX-Request zum Hochladen der Dateien und Start des E-Mail-Versands
@@ -84,14 +46,13 @@
                 console.error('Fehler:', error);
             });
 
-            // Starte die regelmäßige Aktualisierung des Fortschritts und der Statusmeldungen
+            // Fortschrittsbalken und Statusmeldungen aktualisieren
             updateProgress();
             updateStatus();
         });
 
-        // Funktion zum Abrufen des Fortschritts
         function updateProgress() {
-            // Aktualisiere die Fortschrittsleiste alle 500ms
+            // Aktualisiere die Progressbar alle 500ms
             setInterval(function() {
                 fetch('/api/progress')
                     .then(response => response.json())
@@ -105,7 +66,6 @@
             }, 500);  // 500ms Intervall für schnellere Updates
         }
 
-        // Funktion zum Abrufen der Statusmeldungen
         function updateStatus() {
             setInterval(function() {
                 fetch('/api/status')
