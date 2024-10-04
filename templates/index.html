@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accantec Serien E-Mails</title>
+    <!-- Teams-ähnliches CSS-Design -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f2f1;
+            color: #201f1e;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #0078d4;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #d3d3d3;
+            border-radius: 5px;
+        }
+
+        input[type="submit"] {
+            background-color: #0078d4;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #005a9e;
+        }
+
+        .messages {
+            margin: 20px 0;
+        }
+
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Accantec Serien E-Mails</h1>
+
+        <!-- Anzeige der Flash-Nachrichten -->
+        <div class="messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            <label for="word_file">Word-Datei:</label>
+            <input type="file" name="word_file" required><br>
+
+            <label for="excel_file">Excel-Datei:</label>
+            <input type="file" name="excel_file" required><br>
+
+            <label for="signature_file">Signatur-Datei (HTML):</label>
+            <input type="file" name="signature_file" required><br>
+
+            <label for="logo_file">Logo-Datei für Signatur:</label>
+            <input type="file" name="logo_file" required><br>
+
+            <label for="attachments">Anhänge:</label>
+            <input type="file" name="attachments" multiple><br>
+
+            <label for="email_user">E-Mail Benutzername:</label>
+            <input type="text" name="email_user" required><br>
+
+            <label for="email_pass">E-Mail Passwort:</label>
+            <input type="password" name="email_pass" required><br>
+
+            <input type="submit" value="Senden">
+        </form>
+    </div>
+</body>
+</html>

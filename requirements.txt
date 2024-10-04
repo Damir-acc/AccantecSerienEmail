@@ -1,0 +1,7 @@
+numpy==1.26.4 --only-binary=:all:
+Flask==2.1.2            # Für die Web-App
+pandas==1.5.3           # Für die Excel-Verarbeitung
+python-docx==1.1.1     # Für das Verarbeiten von Word-Dateien (.docx)
+openpyxl==3.0.9         # Zum Lesen von Excel-Dateien (für .xlsx)
+Werkzeug==2.1.2         # Werkzeug-Toolkit für Flask (für Datei-Uploads)
+gunicorn==20.1.0        # WSGI-HTTP-Server für die Bereitstellung der App
