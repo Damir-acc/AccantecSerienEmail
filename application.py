@@ -8,11 +8,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, Response
 
 # Neue Variable zur Verfolgung des Fortschritts
 progress_percentage = 0
-
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
 
@@ -86,6 +85,7 @@ def format_email_body(full_text, hyperlinks):
 
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
     global progress_percentage  # Fortschritt als globale Variable
+    global status_messages  # Statusmeldungen als globale Variable
     # Word-Datei und Excel-Daten einlesen
     email_body_template, hyperlinks = read_word_file_with_hyperlinks(word_file_path)
     email_data = read_excel_data(excel_file_path)
@@ -203,7 +203,10 @@ def upload_files():
         smtp_server = 'smtp.office365.com'
         smtp_port = 587
 
-        send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path)
+        # Sende die E-Mails in einem separaten Thread
+        from threading import Thread
+        thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path))
+        thread.start()
 
         return redirect(url_for('upload_files'))
 
@@ -212,7 +215,6 @@ def upload_files():
 @app.route('/api/status', methods=['GET'])
 def get_status():
     return jsonify(status_messages), 200
-
 
 @app.route('/api/progress', methods=['GET'])
 def get_progress():
