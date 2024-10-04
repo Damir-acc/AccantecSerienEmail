@@ -91,6 +91,10 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     updated_signature = edit_signature(signature, logo_cid)
 
     total_emails = len(email_data)
+    
+    # Füge diese Zeile hinzu, um die Gesamtsumme der E-Mails in Flash-Nachrichten zu setzen
+    flash(f'Start des E-Mail-Versands. Insgesamt {total_emails} E-Mails zu senden.')
+
     for index, row in email_data.iterrows():
         nachname = row['Nachname']
         vorname = row['Vorname']

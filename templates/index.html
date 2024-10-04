@@ -1,98 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accantec Serien E-Mails</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 20px;
-            background-color: #f4f4f4;
-            border-radius: 8px;
-        }
-        h1 {
-            color: #333;
-        }
-        form {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-        }
-        input[type="file"],
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        input[type="submit"] {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        input[type="submit"]:hover {
-            background-color: #218838;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .flash-message {
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #e9ffe9;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            border-radius: 5px;
-        }
-    </style>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <h1>Accantec Serien E-Mails</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <label for="word_file">Word-Datei:</label>
-        <input type="file" name="word_file" required><br>
+    <div class="container mt-5">
+        <h1>Accantec Serien E-Mails</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="word_file">Word-Datei:</label>
+                <input type="file" class="form-control" name="word_file" required>
+            </div>
 
-        <label for="excel_file">Excel-Datei:</label>
-        <input type="file" name="excel_file" required><br>
+            <div class="form-group">
+                <label for="excel_file">Excel-Datei:</label>
+                <input type="file" class="form-control" name="excel_file" required>
+            </div>
 
-        <label for="signature_file">Signatur-Datei (HTML):</label>
-        <input type="file" name="signature_file" required><br>
+            <div class="form-group">
+                <label for="signature_file">Signatur-Datei (HTML):</label>
+                <input type="file" class="form-control" name="signature_file" required>
+            </div>
 
-        <label for="logo_file">Logo-Datei für Signatur:</label>
-        <input type="file" name="logo_file" required><br>
+            <div class="form-group">
+                <label for="logo_file">Logo-Datei für Signatur:</label>
+                <input type="file" class="form-control" name="logo_file" required>
+            </div>
 
-        <label for="attachments">Anhänge:</label>
-        <input type="file" name="attachments" multiple><br>
+            <div class="form-group">
+                <label for="attachments">Anhänge:</label>
+                <input type="file" class="form-control" name="attachments" multiple>
+            </div>
 
-        <label for="email_user">E-Mail Benutzername:</label>
-        <input type="text" name="email_user" required><br>
+            <div class="form-group">
+                <label for="email_user">E-Mail Benutzername:</label>
+                <input type="text" class="form-control" name="email_user" required>
+            </div>
 
-        <label for="email_pass">E-Mail Passwort:</label>
-        <input type="password" name="email_pass" required><br>
+            <div class="form-group">
+                <label for="email_pass">E-Mail Passwort:</label>
+                <input type="password" class="form-control" name="email_pass" required>
+            </div>
 
-        <input type="submit" value="Senden">
-    </form>
+            <button type="submit" class="btn btn-primary">Senden</button>
+        </form>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul>
-          {% for message in messages %}
-            <li class="flash-message">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="mt-3">
+                    <ul class="list-group">
+                        {% for message in messages %}
+                            <li class="list-group-item list-group-item-success">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Bootstrap JS, jQuery, and Popper.js -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
