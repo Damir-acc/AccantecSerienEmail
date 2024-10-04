@@ -93,6 +93,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     # Bearbeite die Signatur, um den neuen Logo-Pfad mit cid einzufügen
     updated_signature = edit_signature(signature, logo_cid)
 
+    total_emails = len(email_data)  # Gesamtanzahl der E-Mails
     for index, row in email_data.iterrows():
         nachname = row['Nachname']
         vorname = row['Vorname']
@@ -155,6 +156,8 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
 
             # Statusmeldung hinzufügen
             status_messages.append(f"E-Mail an {email} gesendet.")
+            # Fortschritt hinzufügen
+            status_messages.append(f"E-Mail {index + 1}/{total_emails} gesendet.")
 
         except Exception as e:
             status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {e}")
