@@ -12,36 +12,36 @@
             padding: 0;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Am oberen Rand ausrichten */
-            min-height: 100vh; /* Mindesthöhe für flexibles Layout */
+            align-items: flex-start;
+            min-height: 100vh;
             box-sizing: border-box;
         }
 
         .container {
             background-color: white;
-            padding: 30px; /* Erhöhter innerer Abstand */
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 90%; /* Breite auf 90% setzen */
-            max-width: 1200px; /* Maximale Breite der App */
+            width: 90%;
+            max-width: 1200px;
             box-sizing: border-box;
-            overflow: auto; /* Erlaubt Scrollen, wenn der Inhalt zu groß ist */
-            margin-top: 20px; /* Abstand zum oberen Rand */
+            overflow: auto;
+            margin-top: 20px;
         }
 
         h1, h2 {
             color: #333;
             text-align: center;
-            margin: 0 0 15px 0; /* Mehr Abstand unter der Überschrift */
-            padding-top: 10px; /* Zusätzlicher Abstand oben */
+            margin: 0 0 15px 0;
+            padding-top: 10px;
         }
 
         h1 {
-            font-size: 2rem; /* Kleinere Schriftgröße für h1 */
+            font-size: 2rem;
         }
 
         h2 {
-            font-size: 1.5rem; /* Kleinere Schriftgröße für h2 */
+            font-size: 1.5rem;
         }
 
         form {
@@ -64,22 +64,30 @@
             border-radius: 4px;
             border: 1px solid #ccc;
             font-size: 16px;
-            width: 100%; /* Volle Breite der Eingabefelder */
+            width: 100%;
             box-sizing: border-box;
+        }
+
+        button[type="submit"], button[type="button"] {
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            border: none;
         }
 
         button[type="submit"] {
             background-color: #007bff;
             color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
         }
 
         button[type="submit"]:hover {
             background-color: #0056b3;
+        }
+
+        button[type="button"] {
+            background-color: red;
+            color: white;
         }
 
         .progress {
@@ -108,35 +116,34 @@
             margin-bottom: 10px;
         }
 
-        /* Media Queries für kleinere Bildschirme */
         @media (max-width: 768px) {
             h1 {
-                font-size: 1.5rem; /* Kleinere Schriftgröße auf kleinen Bildschirmen */
+                font-size: 1.5rem;
             }
 
             h2 {
-                font-size: 1.2rem; /* Kleinere Schriftgröße auf kleinen Bildschirmen */
+                font-size: 1.2rem;
             }
 
             input[type="text"], input[type="email"], input[type="password"], input[type="file"], button[type="submit"] {
-                font-size: 14px; /* Kleinere Schriftgröße für Eingabefelder und Buttons */
+                font-size: 14px;
             }
         }
 
         @media (max-width: 480px) {
             h1 {
-                font-size: 1.2rem; /* Noch kleinere Schriftgröße auf sehr kleinen Bildschirmen */
+                font-size: 1.2rem;
             }
 
             h2 {
-                font-size: 1rem; /* Noch kleinere Schriftgröße auf sehr kleinen Bildschirmen */
+                font-size: 1rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Accantec Serien E-Mails</h1> <!-- Überschrift angepasst -->
+        <h1>Accantec Serien E-Mails</h1>
         <form id="emailForm" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="word_file">Word-Datei:</label>
@@ -166,7 +173,8 @@
                 <label for="attachments">Anhänge (optional):</label>
                 <input type="file" name="attachments" multiple>
             </div>
-            <button type="submit">E-Mails senden</button>
+            <button type="submit" id="submitButton">E-Mails senden</button>
+            <button type="button" id="abortButton" style="display:none;">Abbrechen</button>
         </form>
 
         <h2>Fortschritt:</h2>
@@ -206,6 +214,31 @@
         // Statusmeldungen und Fortschritt alle paar Sekunden aktualisieren
         setInterval(fetchStatusMessages, 500);
         setInterval(fetchProgress, 500);
+
+        // Button-Logik: Umschalten zwischen "Senden" und "Abbrechen"
+        $(document).ready(function() {
+            let isSending = false;
+            const submitButton = $('#submitButton');
+            const abortButton = $('#abortButton');
+
+            $('#emailForm').on('submit', function(e) {
+                // Button-Umschaltung bei Formulareinsendung
+                submitButton.hide();
+                abortButton.show();
+                isSending = true;
+            });
+
+            // Abbruch-Button-Klick-Ereignis
+            abortButton.on('click', function() {
+                if (isSending) {
+                    $.post('/api/abort', function(data) {
+                        alert(data.message);
+                        abortButton.hide();
+                        submitButton.show(); // Zurück zum "Senden"-Button
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html>

@@ -84,10 +84,9 @@ def format_email_body(full_text, hyperlinks):
 
     return email_body
 
-# E-Mail-Senden-Funktion (mit Fortschritt und Statusmeldungen)
+# E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
-    global progress_percentage
-    global status_messages
+    global progress_percentage, status_messages, abort_flag
     global lock  # Verwenden des Locks für Thread-Sicherheit
 
     # Word-Datei und Excel-Daten einlesen
@@ -104,6 +103,12 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     total_emails = len(email_data)
 
     for index, row in email_data.iterrows():
+        # Abbruchprüfung
+        if abort_flag:
+            with lock:
+                status_messages.append("Versand wurde abgebrochen.")
+            break
+
         nachname = row['Nachname']
         vorname = row['Vorname']
         betreff = row['BETREFF']
@@ -172,14 +177,14 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
-    global progress_percentage
-    global status_messages
+    global progress_percentage, status_messages, abort_flag
 
     # Fortschritt und Statusmeldungen beim Neuladen der Seite zurücksetzen
     if request.method == 'GET':
         with lock:  # Thread-Safe Zurücksetzen
             progress_percentage = 0
             status_messages = []
+            abort_flag = False  # Reset des Abbruch-Flags
 
     if request.method == 'POST':
         word_file = request.files['word_file']
@@ -221,6 +226,14 @@ def upload_files():
         return redirect(url_for('upload_files'))
 
     return render_template('index.html')
+
+@app.route('/api/abort', methods=['POST'])
+def abort():
+    global abort_flag
+    with lock:
+        abort_flag = True  # Setze das Abbruch-Flag
+        status_messages.append("Abbruchvorgang wurde eingeleitet.")
+    return jsonify({"message": "Abbruchvorgang wurde eingeleitet."}), 200
 
 @app.route('/api/status', methods=['GET'])
 def get_status():
