@@ -9,18 +9,19 @@ from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
 from flask import Flask, render_template, request, redirect, url_for, jsonify, Response
+import threading  # Für den Thread-Safe-Mechanismus
 
-# Neue Variable zur Verfolgung des Fortschritts
+# Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
+status_messages = []
+lock = threading.Lock()  # Lock, um Threads zu synchronisieren
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
 
 # Definiere den Upload-Ordner
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Erstellt den Ordner, falls er nicht existiert
-
-# Liste zur Speicherung der Statusmeldungen
-status_messages = []
 
 # Funktion zum Lesen des Word-Dokuments und Extrahieren von Text und Hyperlinks
 def read_word_file_with_hyperlinks(word_file_path):
@@ -83,9 +84,12 @@ def format_email_body(full_text, hyperlinks):
 
     return email_body
 
+# E-Mail-Senden-Funktion (mit Fortschritt und Statusmeldungen)
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
-    global progress_percentage  # Fortschritt als globale Variable
-    global status_messages  # Statusmeldungen als globale Variable
+    global progress_percentage
+    global status_messages
+    global lock  # Verwenden des Locks für Thread-Sicherheit
+
     # Word-Datei und Excel-Daten einlesen
     email_body_template, hyperlinks = read_word_file_with_hyperlinks(word_file_path)
     email_data = read_excel_data(excel_file_path)
@@ -97,7 +101,8 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     # Bearbeite die Signatur, um den neuen Logo-Pfad mit cid einzufügen
     updated_signature = edit_signature(signature, logo_cid)
 
-    total_emails = len(email_data)  # Gesamtanzahl der E-Mails
+    total_emails = len(email_data)
+
     for index, row in email_data.iterrows():
         nachname = row['Nachname']
         vorname = row['Vorname']
@@ -118,12 +123,10 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
         email_body += format_email_body(email_body_template, hyperlinks)
         email_body += "<br><br>" + updated_signature
 
-        # E-Mail erstellen
-        msg = MIMEMultipart('related')  # multipart/related für eingebettete Inhalte
+        msg = MIMEMultipart('related')
         msg['From'] = username
         msg['To'] = email
         msg['Subject'] = betreff
-
         msg.attach(MIMEText(email_body, 'html', 'UTF-8'))
 
         # Logo einbetten (ohne als regulären Anhang zu versenden)
@@ -136,7 +139,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
         except Exception as e:
             print(f'Fehler beim Einbetten des Logos: {e}')
 
-        # Anhänge hinzufügen, Logo dabei überspringen
+        # Anhänge hinzufügen
         for attachment_filename in attachments:
             attachment_path = os.path.join(UPLOAD_FOLDER, attachment_filename)
             if os.path.exists(attachment_path) and attachment_filename != os.path.basename(logo_path):
@@ -145,7 +148,6 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                         part = MIMEApplication(attachment_file.read(), Name=attachment_filename)
                         part['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
                         msg.attach(part)
-
                 except Exception as e:
                     print(f'Fehler beim Anhängen der Datei "{attachment_path}": {e}')
             else:
@@ -154,33 +156,36 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
         try:
             # E-Mail über den SMTP-Server senden
             with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()  # TLS aktivieren
+                server.starttls()
                 server.login(username, password)
                 server.send_message(msg)
 
-            # Statusmeldung hinzufügen
-            status_messages.append(f"E-Mail an {email} gesendet.")
-            # Fortschritt hinzufügen
-            status_messages.append(f"E-Mail {index + 1}/{total_emails} gesendet.")
-
-            # Fortschritt berechnen
-            progress_percentage = int(((index + 1) / total_emails) * 100)
+            # Fortschritt und Statusmeldung aktualisieren (Thread-sicher)
+            with lock:
+                status_messages.append(f"E-Mail an {email} gesendet.")
+                status_messages.append(f"E-Mail {index + 1}/{total_emails} gesendet.")
+                progress_percentage = int(((index + 1) / total_emails) * 100)
 
         except Exception as e:
-            status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {e}")
+            with lock:
+                status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {e}")
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
+    global progress_percentage
+    global status_messages
+
     # Fortschritt und Statusmeldungen beim Neuladen der Seite zurücksetzen
     if request.method == 'GET':
-        progress_percentage = 0
-        status_messages = []
+        with lock:  # Thread-Safe Zurücksetzen
+            progress_percentage = 0
+            status_messages = []
 
     if request.method == 'POST':
         word_file = request.files['word_file']
         excel_file = request.files['excel_file']
         signature_file = request.files['signature_file']
-        logo_file = request.files['logo_file']  # Hochladen des Logos
+        logo_file = request.files['logo_file']
         username = request.form['email_user']
         password = request.form['email_pass']
 
@@ -188,14 +193,14 @@ def upload_files():
         word_file_path = os.path.join(UPLOAD_FOLDER, word_file.filename)
         excel_file_path = os.path.join(UPLOAD_FOLDER, excel_file.filename)
         signature_path = os.path.join(UPLOAD_FOLDER, signature_file.filename)
-        logo_path = os.path.join(UPLOAD_FOLDER, logo_file.filename)  # Speicherort des Logos
+        logo_path = os.path.join(UPLOAD_FOLDER, logo_file.filename)
 
         word_file.save(word_file_path)
         excel_file.save(excel_file_path)
         signature_file.save(signature_path)
-        logo_file.save(logo_path)  # Speichern des Logos
+        logo_file.save(logo_path)
 
-        # Liste der Anhänge aus dem Upload-Formular erstellen
+        # Liste der Anhänge erstellen
         attachments = request.files.getlist('attachments')
         attachment_filenames = []
         for attachment in attachments:
@@ -219,12 +224,14 @@ def upload_files():
 
 @app.route('/api/status', methods=['GET'])
 def get_status():
-    return jsonify(status_messages), 200
+    with lock:  # Thread-Safe Status auslesen
+        return jsonify(status_messages), 200
 
 @app.route('/api/progress', methods=['GET'])
 def get_progress():
     global progress_percentage
-    return jsonify({"progress": progress_percentage}), 200
+    with lock:  # Thread-Safe Fortschritt auslesen
+        return jsonify({"progress": progress_percentage}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
