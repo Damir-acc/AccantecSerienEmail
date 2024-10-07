@@ -23,7 +23,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             max-width: 600px; /* Maximale Breite der App */
-            width: 95%; /* Breite für die Teams-Oberfläche */
+            width: 90%; /* Standardbreite für die Teams-Oberfläche */
             box-sizing: border-box;
             overflow: auto; /* Erlaubt Scrollen, wenn der Inhalt zu groß ist */
             padding-bottom: 30px; /* Zusätzlicher Platz am unteren Ende für Scrollbalken */
@@ -65,7 +65,7 @@
             border-radius: 4px;
             border: 1px solid #ccc;
             font-size: 16px;
-            width: 100%;
+            width: 100%; /* Volle Breite der Eingabefelder */
             box-sizing: border-box;
         }
 
@@ -110,6 +110,10 @@
         }
 
         @media (max-width: 768px) {
+            .container {
+                width: 95%; /* Breite auf kleineren Bildschirmen */
+            }
+
             h1 {
                 font-size: 1.5rem; /* Kleinere Schriftgröße auf kleinen Bildschirmen */
             }
@@ -118,26 +122,23 @@
                 font-size: 1.2rem; /* Kleinere Schriftgröße auf kleinen Bildschirmen */
             }
 
-            .container {
-                padding: 15px; /* Weniger innerer Abstand */
-            }
-
             input[type="text"], input[type="email"], input[type="password"], input[type="file"], button[type="submit"] {
                 font-size: 14px; /* Kleinere Schriftgröße für Eingabefelder und Buttons */
             }
         }
 
         @media (max-width: 480px) {
+            .container {
+                width: 100%; /* Volle Breite auf sehr kleinen Bildschirmen */
+                padding: 10px; /* Weniger innerer Abstand auf sehr kleinen Bildschirmen */
+            }
+
             h1 {
                 font-size: 1.2rem; /* Noch kleinere Schriftgröße auf sehr kleinen Bildschirmen */
             }
 
             h2 {
                 font-size: 1rem; /* Noch kleinere Schriftgröße auf sehr kleinen Bildschirmen */
-            }
-
-            .container {
-                padding: 10px; /* Weniger innerer Abstand auf sehr kleinen Bildschirmen */
             }
         }
     </style>
@@ -216,4 +217,3 @@
         setInterval(fetchProgress, 500);
     </script>
 </body>
-</html>
