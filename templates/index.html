@@ -13,7 +13,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh; /* Mindesthöhe für flexibles Layout */
             box-sizing: border-box;
         }
 
@@ -22,7 +22,7 @@
             padding: 20px; /* Erhöhter innerer Abstand */
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 100%; /* Anpassung der maximalen Breite */
+            max-width: 600px; /* Maximale Breite der App */
             width: 95%; /* Breite für die Teams-Oberfläche */
             box-sizing: border-box;
             overflow: auto; /* Erlaubt Scrollen, wenn der Inhalt zu groß ist */
@@ -107,6 +107,38 @@
 
         ul li {
             margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem; /* Kleinere Schriftgröße auf kleinen Bildschirmen */
+            }
+
+            h2 {
+                font-size: 1.2rem; /* Kleinere Schriftgröße auf kleinen Bildschirmen */
+            }
+
+            .container {
+                padding: 15px; /* Weniger innerer Abstand */
+            }
+
+            input[type="text"], input[type="email"], input[type="password"], input[type="file"], button[type="submit"] {
+                font-size: 14px; /* Kleinere Schriftgröße für Eingabefelder und Buttons */
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.2rem; /* Noch kleinere Schriftgröße auf sehr kleinen Bildschirmen */
+            }
+
+            h2 {
+                font-size: 1rem; /* Noch kleinere Schriftgröße auf sehr kleinen Bildschirmen */
+            }
+
+            .container {
+                padding: 10px; /* Weniger innerer Abstand auf sehr kleinen Bildschirmen */
+            }
         }
     </style>
 </head>
