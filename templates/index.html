@@ -52,14 +52,18 @@
     </div>
 
     <script>
-        function resetForm() {
-            document.getElementById("emailForm").reset(); // Setzt alle Formularfelder zurück
-            $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%'); // Setzt den Fortschrittsbalken zurück
-            $('#statusMessages').empty(); // Leert die Statusmeldungen
+        function resetProgressAndMessages() {
+            // Fortschrittsbalken zurücksetzen
+            $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+            // Statusmeldungen leeren
+            $('#statusMessages').empty();
         }
 
-        // Aufrufen der Reset-Funktion, wenn die Seite geladen wird
-        window.onload = resetForm;
+        // Bei Seitenladeereignis das Formular und den Fortschritt zurücksetzen
+        window.onload = function() {
+            resetProgressAndMessages();  // Fortschritt und Status zurücksetzen
+            document.getElementById("emailForm").reset(); // Setzt alle Formularfelder zurück
+        }
 
         function fetchStatusMessages() {
             $.get('/api/status', function(data) {
