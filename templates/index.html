@@ -222,10 +222,29 @@
             const abortButton = $('#abortButton');
 
             $('#emailForm').on('submit', function(e) {
-                // Button-Umschaltung bei Formulareinsendung
-                submitButton.hide();
-                abortButton.show();
-                isSending = true;
+                e.preventDefault(); // Verhindert die Standardübermittlung
+                submitButton.hide(); // Versteckt den Senden-Button
+                abortButton.show(); // Zeigt den Abbrechen-Button an
+                isSending = true; // Setzt den Status auf "sendet"
+
+                const formData = new FormData(this); // Formulardaten erfassen
+
+                $.ajax({
+                    url: '/',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        // Erfolgreiche Rückmeldung, hier könnte man Logik hinzufügen, wenn nötig
+                    },
+                    error: function() {
+                        alert('Fehler beim Hochladen der Dateien.');
+                        isSending = false;
+                        submitButton.show(); // Zeigt den Senden-Button wieder an
+                        abortButton.hide(); // Versteckt den Abbrechen-Button
+                    }
+                });
             });
 
             // Abbruch-Button-Klick-Ereignis
@@ -233,8 +252,9 @@
                 if (isSending) {
                     $.post('/api/abort', function(data) {
                         alert(data.message);
-                        abortButton.hide();
-                        submitButton.show(); // Zurück zum "Senden"-Button
+                        abortButton.hide(); // Versteckt den Abbrechen-Button
+                        submitButton.show(); // Zeigt den Senden-Button wieder an
+                        isSending = false; // Setzt den Status zurück
                     });
                 }
             });

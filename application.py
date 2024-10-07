@@ -8,12 +8,13 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
-from flask import Flask, render_template, request, redirect, url_for, jsonify, Response
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import threading  # Für den Thread-Safe-Mechanismus
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
 status_messages = []
+abort_flag = False
 lock = threading.Lock()  # Lock, um Threads zu synchronisieren
 
 app = Flask(__name__)
