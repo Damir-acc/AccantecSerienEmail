@@ -171,6 +171,11 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
+    # Fortschritt und Statusmeldungen beim Neuladen der Seite zurücksetzen
+    if request.method == 'GET':
+        progress_percentage = 0
+        status_messages = []
+
     if request.method == 'POST':
         word_file = request.files['word_file']
         excel_file = request.files['excel_file']
