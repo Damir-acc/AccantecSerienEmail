@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accantec Serien E-Mails</title>
+    <title>E-Mail Sender</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Accantec Serien E-Mails</h1>
-        <form method="post" enctype="multipart/form-data">
+        <h1>E-Mail Versender</h1>
+        <form id="emailForm" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="word_file">Word-Datei:</label>
                 <input type="file" class="form-control-file" name="word_file" required>
@@ -52,6 +52,15 @@
     </div>
 
     <script>
+        function resetForm() {
+            document.getElementById("emailForm").reset(); // Setzt alle Formularfelder zurück
+            $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%'); // Setzt den Fortschrittsbalken zurück
+            $('#statusMessages').empty(); // Leert die Statusmeldungen
+        }
+
+        // Aufrufen der Reset-Funktion, wenn die Seite geladen wird
+        window.onload = resetForm;
+
         function fetchStatusMessages() {
             $.get('/api/status', function(data) {
                 $('#statusMessages').empty();
@@ -69,8 +78,8 @@
         }
 
         // Statusmeldungen und Fortschritt alle paar Sekunden aktualisieren
-        setInterval(fetchStatusMessages, 2000);
-        setInterval(fetchProgress, 2000);
+        setInterval(fetchStatusMessages, 500);
+        setInterval(fetchProgress, 500);
     </script>
 </body>
 </html>
