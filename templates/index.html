@@ -211,6 +211,22 @@
             });
         }
 
+        function checkCompletion() {
+            $.get('/api/complete', function(data) {
+                if (data.completed) {
+                    alert('E-Mail-Versand abgeschlossen.');
+                    // Zeige den Senden-Button wieder an und verstecke den Abbrechen-Button
+                    $('#submitButton').show();
+                    $('#abortButton').hide();
+                    // Fortschrittsanzeige zurücksetzen
+                    $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+                    $('#statusMessages').empty(); // Statusmeldungen löschen
+                } else {
+                    setTimeout(checkCompletion, 1000);  // Wenn nicht abgeschlossen, wiederhole die Überprüfung
+                }
+            });
+        }
+
         // Statusmeldungen und Fortschritt alle paar Sekunden aktualisieren
         setInterval(fetchStatusMessages, 500);
         setInterval(fetchProgress, 500);
@@ -236,7 +252,8 @@
                     processData: false,
                     contentType: false,
                     success: function(response) {
-                        // Erfolgreiche Rückmeldung, hier könnte man Logik hinzufügen, wenn nötig
+                        // Starte die Überprüfung des Abschlusses
+                        checkCompletion();
                     },
                     error: function() {
                         alert('Fehler beim Hochladen der Dateien.');

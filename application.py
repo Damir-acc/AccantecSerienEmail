@@ -15,6 +15,7 @@ import threading  # Für den Thread-Safe-Mechanismus
 progress_percentage = 0
 status_messages = []
 abort_flag = False
+emails_completed = False  # Neue Variable, um den Abschluss zu verfolgen
 lock = threading.Lock()  # Lock, um Threads zu synchronisieren
 
 app = Flask(__name__)
@@ -87,7 +88,7 @@ def format_email_body(full_text, hyperlinks):
 
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
-    global progress_percentage, status_messages, abort_flag
+    global progress_percentage, status_messages, abort_flag, emails_completed
     global lock  # Verwenden des Locks für Thread-Sicherheit
 
     # Word-Datei und Excel-Daten einlesen
@@ -175,10 +176,14 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
         except Exception as e:
             with lock:
                 status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {e}")
+    
+    # Versand abgeschlossen
+    with lock:
+        emails_completed = True
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
-    global progress_percentage, status_messages, abort_flag
+    global progress_percentage, status_messages, abort_flag, emails_completed
 
     # Fortschritt und Statusmeldungen beim Neuladen der Seite zurücksetzen
     if request.method == 'GET':
@@ -186,6 +191,7 @@ def upload_files():
             progress_percentage = 0
             status_messages = []
             abort_flag = False  # Reset des Abbruch-Flags
+            emails_completed = False  # Reset des Abschluss-Status
 
     if request.method == 'POST':
         word_file = request.files['word_file']
@@ -246,6 +252,12 @@ def get_progress():
     global progress_percentage
     with lock:  # Thread-Safe Fortschritt auslesen
         return jsonify({"progress": progress_percentage}), 200
+    
+@app.route('/api/complete', methods=['GET'])
+def check_complete():
+    global emails_completed
+    with lock:
+        return jsonify({"completed": emails_completed}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
