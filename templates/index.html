@@ -219,10 +219,10 @@
                     $('#submitButton').show();
                     $('#abortButton').hide();
                     // Fortschrittsanzeige zurücksetzen
-                    $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
-                    $('#statusMessages').empty(); // Statusmeldungen löschen
+                    //$('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+                    //$('#statusMessages').empty(); // Statusmeldungen löschen
                 } else {
-                    setTimeout(checkCompletion, 1000);  // Wenn nicht abgeschlossen, wiederhole die Überprüfung
+                    setInterval(checkCompletion, 1000);  // Wenn nicht abgeschlossen, wiederhole die Überprüfung
                 }
             });
         }
