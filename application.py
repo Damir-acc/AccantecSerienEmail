@@ -101,11 +101,12 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     if not validate_file_type(word_file_path, '.docx'):
         with lock:
             status_messages.append("Falscher Dateityp für das Word-Dokument. Bitte eine .docx-Datei hochladen.")
-        return
+            abort_flag = True
+        
     if not validate_file_type(excel_file_path, '.xlsx'):
         with lock:
             status_messages.append("Falscher Dateityp für die Excel-Datei. Bitte eine .xlsx-Datei hochladen.")
-        return
+            abort_flag = True
 
     # Word-Datei und Excel-Daten einlesen
     email_body_template, hyperlinks = read_word_file_with_hyperlinks(word_file_path)
