@@ -177,7 +177,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
             with lock:
                 status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {e}")
                 abort_flag = True
-            return
+            
     
     # Versand abgeschlossen
     with lock:
