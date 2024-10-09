@@ -10,6 +10,7 @@ from email.mime.image import MIMEImage
 from docx import Document
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import threading  # Für den Thread-Safe-Mechanismus
+import time
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
@@ -103,13 +104,16 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
             status_messages.append("Falscher Dateityp für das Word-Dokument. Bitte eine .docx-Datei hochladen.")
             abort_flag = True
             emails_completed = True
+            time.sleep(1)
         return
+        
         
     if not validate_file_type(excel_file_path, '.xlsx'):
         with lock:
             status_messages.append("Falscher Dateityp für die Excel-Datei. Bitte eine .xlsx-Datei hochladen.")
             abort_flag = True
             emails_completed = True
+            time.sleep(1)
         return
 
     # Word-Datei und Excel-Daten einlesen
