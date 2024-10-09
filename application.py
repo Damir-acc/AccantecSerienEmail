@@ -86,10 +86,26 @@ def format_email_body(full_text, hyperlinks):
 
     return email_body
 
+# Funktion zur Validierung der Dateitypen basierend auf der Dateiendung
+def validate_file_type(file_path, expected_extension):
+    _, file_extension = os.path.splitext(file_path)
+    return file_extension.lower() == expected_extension
+
+
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
     global progress_percentage, status_messages, abort_flag, emails_completed
     global lock  # Verwenden des Locks für Thread-Sicherheit
+
+    # Überprüfe die Dateitypen vor dem Start
+    if not validate_file_type(word_file_path, '.docx'):
+        with lock:
+            status_messages.append("Falscher Dateityp für das Word-Dokument. Bitte eine .docx-Datei hochladen.")
+        return
+    if not validate_file_type(excel_file_path, '.xlsx'):
+        with lock:
+            status_messages.append("Falscher Dateityp für die Excel-Datei. Bitte eine .xlsx-Datei hochladen.")
+        return
 
     # Word-Datei und Excel-Daten einlesen
     email_body_template, hyperlinks = read_word_file_with_hyperlinks(word_file_path)
