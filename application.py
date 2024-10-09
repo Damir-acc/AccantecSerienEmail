@@ -194,6 +194,9 @@ def upload_files():
             emails_completed = False  # Reset des Abschluss-Status
 
     if request.method == 'POST':
+        # Setze abort_flag zurück, bevor ein neuer Upload-Prozess gestartet wird
+        with lock:
+            abort_flag = False  # Reset des Abbruch-Flags bei POST-Start  
         word_file = request.files['word_file']
         excel_file = request.files['excel_file']
         signature_file = request.files['signature_file']
