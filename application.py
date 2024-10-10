@@ -202,6 +202,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
 
     # Versand abgeschlossen oder abgebrochen
     with lock:
+        status_messages.append("IN COMPLETED LOCK did it!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         emails_completed = True
 
 @app.route('/', methods=['GET', 'POST'])
