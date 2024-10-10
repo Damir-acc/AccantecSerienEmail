@@ -92,11 +92,11 @@ def validate_file_type(file_path, expected_extension):
     global status_messages, lock, abort_flag, emails_completed
     _, file_extension = os.path.splitext(file_path)
     if file_extension.lower() != expected_extension:
-        with lock:
-           status_messages.append(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
-           abort_flag = True
-           emails_completed = True
-           time.sleep(2)
+        #with lock:
+           #status_messages.append(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
+           #abort_flag = True
+           #emails_completed = True
+           #time.sleep(20)
         raise ValueError(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
         
 
@@ -201,8 +201,8 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     except ValueError as ve:
         with lock:
             status_messages.append(str(ve))  # Füge die Fehlermeldung zu den Statusmeldungen hinzu
-            abort_flag = True
-            emails_completed = True
+            #abort_flag = True
+            #emails_completed = True
 
     # Versand abgeschlossen oder abgebrochen
     with lock:
