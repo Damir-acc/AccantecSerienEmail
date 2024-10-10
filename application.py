@@ -199,10 +199,10 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
         with lock:
             status_messages.append(str(ve))  # Füge die Fehlermeldung zu den Statusmeldungen hinzu
             abort_flag = True
+            emails_completed = True
 
     # Versand abgeschlossen oder abgebrochen
     with lock:
-        status_messages.append("IN COMPLETED LOCK did it!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         emails_completed = True
 
 @app.route('/', methods=['GET', 'POST'])
