@@ -96,6 +96,7 @@ def validate_file_type(file_path, expected_extension):
            status_messages.append(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
            abort_flag = True
            emails_completed = True
+           time.sleep(2)
         raise ValueError(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
         
 
