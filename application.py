@@ -89,9 +89,13 @@ def format_email_body(full_text, hyperlinks):
 
 # Funktion zur Validierung der Dateitypen basierend auf der Dateiendung
 def validate_file_type(file_path, expected_extension):
+    global status_messages, lock
     _, file_extension = os.path.splitext(file_path)
     if file_extension.lower() != expected_extension:
-        raise ValueError(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
+        error_message = f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}"
+        with lock:
+            status_messages.append(error_message)  # Hinzufügen der Fehlermeldung zu den Statusmeldungen
+        raise ValueError(error_message)
         
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
