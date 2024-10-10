@@ -89,12 +89,9 @@ def format_email_body(full_text, hyperlinks):
 
 # Funktion zur Validierung der Dateitypen basierend auf der Dateiendung
 def validate_file_type(file_path, expected_extension):
-    global abort_flag, lock
     _, file_extension = os.path.splitext(file_path)
     if file_extension.lower() != expected_extension:
-        with lock:
-           abort_flag = True
-        #raise ValueError(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
+        raise ValueError(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
         
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
@@ -103,8 +100,8 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
 
     try:
         # Überprüfe die Dateitypen vor dem Start
-        #validate_file_type(word_file_path, '.docx')
-        #validate_file_type(excel_file_path, '.xlsx')
+        validate_file_type(word_file_path, '.docx')
+        validate_file_type(excel_file_path, '.xlsx')
 
         # Word-Datei und Excel-Daten einlesen
         email_body_template, hyperlinks = read_word_file_with_hyperlinks(word_file_path)
@@ -196,6 +193,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     except ValueError as ve:
         with lock:
             status_messages.append(str(ve))  # Füge die Fehlermeldung zu den Statusmeldungen hinzu
+        return jsonify({'error': str(ve)}), 400
             #abort_flag = True
             #emails_completed = True
 
@@ -237,10 +235,6 @@ def upload_files():
         excel_file.save(excel_file_path)
         signature_file.save(signature_path)
         logo_file.save(logo_path)
-
-        # Validierung der Dateitypen
-        validate_file_type(word_file_path, '.docx')
-        validate_file_type(excel_file_path, '.xlsx')
 
         # Liste der Anhänge erstellen
         attachments = request.files.getlist('attachments')
