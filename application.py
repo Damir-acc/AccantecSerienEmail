@@ -257,13 +257,14 @@ def upload_files():
            return jsonify({'error': str(ve)}), 400
 
         # Liste der Anhänge erstellen
-        attachments = request.files.getlist('attachments')
         attachment_filenames = []
+        attachments = request.files.getlist('attachments')
         for attachment in attachments:
-            attachment_filename = attachment.filename
-            attachment_path = os.path.join(UPLOAD_FOLDER, attachment_filename)
-            attachment.save(attachment_path)
-            attachment_filenames.append(attachment_filename)
+            if attachment.filename:  # Überprüfen, ob ein Dateiname vorhanden ist
+               attachment_filename = attachment.filename
+               attachment_path = os.path.join(UPLOAD_FOLDER, attachment_filename)
+               attachment.save(attachment_path)
+               attachment_filenames.append(attachment_filename)
 
         # SMTP-Server-Einstellungen
         smtp_server = 'smtp.office365.com'
