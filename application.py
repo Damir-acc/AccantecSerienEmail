@@ -250,6 +250,8 @@ def upload_files():
            # Überprüfe die Dateitypen vor dem Start
            validate_file_type(word_file_path, '.docx')
            validate_file_type(excel_file_path, '.xlsx')
+           validate_file_type(signature_path, ['.htm','.html'])
+           validate_file_type(logo_path, ['.png','.jpg','.gif'])
         except ValueError as ve:
            # Rückgabe der Fehlermeldung an das Frontend
            return jsonify({'error': str(ve)}), 400
