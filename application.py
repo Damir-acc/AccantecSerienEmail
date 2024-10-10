@@ -90,7 +90,8 @@ def format_email_body(full_text, hyperlinks):
 # Funktion zur Validierung der Dateitypen basierend auf der Dateiendung
 def validate_file_type(file_path, expected_extension):
     _, file_extension = os.path.splitext(file_path)
-    return file_extension.lower() == expected_extension
+    if file_extension.lower() != expected_extension:
+        raise ValueError(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
 
 
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
@@ -98,113 +99,104 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     global progress_percentage, status_messages, abort_flag, emails_completed
     global lock  # Verwenden des Locks für Thread-Sicherheit
 
-    # Überprüfe die Dateitypen vor dem Start
-    if not validate_file_type(word_file_path, '.docx'):
-        with lock:
-            status_messages.append("Falscher Dateityp für das Word-Dokument. Bitte eine .docx-Datei hochladen.")
-            abort_flag = True
-            emails_completed = True
-            time.sleep(1)
-        return
-        
-        
-    if not validate_file_type(excel_file_path, '.xlsx'):
-        with lock:
-            status_messages.append("Falscher Dateityp für die Excel-Datei. Bitte eine .xlsx-Datei hochladen.")
-            abort_flag = True
-            emails_completed = True
-            time.sleep(1)
-        return
+    try:
+        # Überprüfe die Dateitypen vor dem Start
+        validate_file_type(word_file_path, '.docx')
+        validate_file_type(excel_file_path, '.xlsx')
 
-    # Word-Datei und Excel-Daten einlesen
-    email_body_template, hyperlinks = read_word_file_with_hyperlinks(word_file_path)
-    email_data = read_excel_data(excel_file_path)
-    signature = load_signature(signature_path)
+        # Word-Datei und Excel-Daten einlesen
+        email_body_template, hyperlinks = read_word_file_with_hyperlinks(word_file_path)
+        email_data = read_excel_data(excel_file_path)
+        signature = load_signature(signature_path)
 
-    # Content-ID für das Logo definieren (für Einbettung)
-    logo_cid = 'logo_cid'
+        # Content-ID für das Logo definieren (für Einbettung)
+        logo_cid = 'logo_cid'
 
-    # Bearbeite die Signatur, um den neuen Logo-Pfad mit cid einzufügen
-    updated_signature = edit_signature(signature, logo_cid)
+        # Bearbeite die Signatur, um den neuen Logo-Pfad mit cid einzufügen
+        updated_signature = edit_signature(signature, logo_cid)
 
-    total_emails = len(email_data)
+        total_emails = len(email_data)
 
-    for index, row in email_data.iterrows():
-        # Abbruchprüfung
-        if abort_flag:
-            with lock:
-                status_messages.append("Versand wurde abgebrochen.")
-            break
+        for index, row in email_data.iterrows():
+            # Abbruchprüfung
+            if abort_flag:
+                with lock:
+                    status_messages.append("Versand wurde abgebrochen.")
+                break
 
-        nachname = row['Nachname']
-        vorname = row['Vorname']
-        betreff = row['BETREFF']
-        titel = row['Titel']
-        salutation = row['Anrede']
-        email = row['E-Mail']
+            nachname = row['Nachname']
+            vorname = row['Vorname']
+            betreff = row['BETREFF']
+            titel = row['Titel']
+            salutation = row['Anrede']
+            email = row['E-Mail']
 
-        if salutation == "Frau":
-            geehrt = "Sehr geehrte"
-        elif salutation == "Herr":
-            geehrt = "Sehr geehrter"
-        else:
-            geehrt = "Liebe/r"
-
-        # E-Mail-Text erstellen
-        email_body = f"<p>{geehrt} {salutation} {nachname},</p>"
-        email_body += format_email_body(email_body_template, hyperlinks)
-        email_body += "<br><br>" + updated_signature
-
-        msg = MIMEMultipart('related')
-        msg['From'] = username
-        msg['To'] = email
-        msg['Subject'] = betreff
-        msg.attach(MIMEText(email_body, 'html', 'UTF-8'))
-
-        # Logo einbetten (ohne als regulären Anhang zu versenden)
-        try:
-            with open(logo_path, 'rb') as logo_file:
-                logo = MIMEImage(logo_file.read())
-                logo.add_header('Content-ID', f'<{logo_cid}>')
-                logo.add_header('Content-Disposition', 'inline', filename=os.path.basename(logo_path))
-                msg.attach(logo)
-        except Exception as e:
-            print(f'Fehler beim Einbetten des Logos: {e}')
-
-        # Anhänge hinzufügen
-        for attachment_filename in attachments:
-            attachment_path = os.path.join(UPLOAD_FOLDER, attachment_filename)
-            if os.path.exists(attachment_path) and attachment_filename != os.path.basename(logo_path):
-                try:
-                    with open(attachment_path, 'rb') as attachment_file:
-                        part = MIMEApplication(attachment_file.read(), Name=attachment_filename)
-                        part['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
-                        msg.attach(part)
-                except Exception as e:
-                    print(f'Fehler beim Anhängen der Datei "{attachment_path}": {e}')
+            if salutation == "Frau":
+                geehrt = "Sehr geehrte"
+            elif salutation == "Herr":
+                geehrt = "Sehr geehrter"
             else:
-                print(f'Anhang für {email} konnte nicht hinzugefügt werden. Datei "{attachment_path}" nicht gefunden oder ist das Logo.')
+                geehrt = "Liebe/r"
 
-        try:
-            # E-Mail über den SMTP-Server senden
-            with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()
-                server.login(username, password)
-                server.send_message(msg)
+            # E-Mail-Text erstellen
+            email_body = f"<p>{geehrt} {salutation} {nachname},</p>"
+            email_body += format_email_body(email_body_template, hyperlinks)
+            email_body += "<br><br>" + updated_signature
 
-            # Fortschritt und Statusmeldung aktualisieren (Thread-sicher)
-            with lock:
-                status_messages.append(f"E-Mail an {email} gesendet.")
-                status_messages.append(f"E-Mail {index + 1}/{total_emails} gesendet.")
-                progress_percentage = int(((index + 1) / total_emails) * 100)
+            msg = MIMEMultipart('related')
+            msg['From'] = username
+            msg['To'] = email
+            msg['Subject'] = betreff
+            msg.attach(MIMEText(email_body, 'html', 'UTF-8'))
 
-        except Exception as e:
-            with lock:
-                status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {e}")
-                abort_flag = True
-            
-    
-    # Versand abgeschlossen
+            # Logo einbetten (ohne als regulären Anhang zu versenden)
+            try:
+                with open(logo_path, 'rb') as logo_file:
+                    logo = MIMEImage(logo_file.read())
+                    logo.add_header('Content-ID', f'<{logo_cid}>')
+                    logo.add_header('Content-Disposition', 'inline', filename=os.path.basename(logo_path))
+                    msg.attach(logo)
+            except Exception as e:
+                print(f'Fehler beim Einbetten des Logos: {e}')
+
+            # Anhänge hinzufügen
+            for attachment_filename in attachments:
+                attachment_path = os.path.join(UPLOAD_FOLDER, attachment_filename)
+                if os.path.exists(attachment_path) and attachment_filename != os.path.basename(logo_path):
+                    try:
+                        with open(attachment_path, 'rb') as attachment_file:
+                            part = MIMEApplication(attachment_file.read(), Name=attachment_filename)
+                            part['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
+                            msg.attach(part)
+                    except Exception as e:
+                        print(f'Fehler beim Anhängen der Datei "{attachment_path}": {e}')
+                else:
+                    print(f'Anhang für {email} konnte nicht hinzugefügt werden. Datei "{attachment_path}" nicht gefunden oder ist das Logo.')
+
+            try:
+                # E-Mail über den SMTP-Server senden
+                with smtplib.SMTP(smtp_server, smtp_port) as server:
+                    server.starttls()
+                    server.login(username, password)
+                    server.send_message(msg)
+
+                # Fortschritt und Statusmeldung aktualisieren (Thread-sicher)
+                with lock:
+                    status_messages.append(f"E-Mail an {email} gesendet.")
+                    status_messages.append(f"E-Mail {index + 1}/{total_emails} gesendet.")
+                    progress_percentage = int(((index + 1) / total_emails) * 100)
+
+            except Exception as e:
+                with lock:
+                    status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {e}")
+                    abort_flag = True
+
+    except ValueError as ve:
+        with lock:
+            status_messages.append(str(ve))  # Füge die Fehlermeldung zu den Statusmeldungen hinzu
+            abort_flag = True
+
+    # Versand abgeschlossen oder abgebrochen
     with lock:
         emails_completed = True
 
@@ -224,6 +216,7 @@ def upload_files():
         # Setze abort_flag zurück, bevor ein neuer Upload-Prozess gestartet wird
         with lock:
             abort_flag = False  # Reset des Abbruch-Flags bei POST-Start  
+            
         word_file = request.files['word_file']
         excel_file = request.files['excel_file']
         signature_file = request.files['signature_file']
