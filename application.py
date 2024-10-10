@@ -99,10 +99,6 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     global lock  # Verwenden des Locks für Thread-Sicherheit
 
     try:
-        # Überprüfe die Dateitypen vor dem Start
-        validate_file_type(word_file_path, '.docx')
-        validate_file_type(excel_file_path, '.xlsx')
-
         # Word-Datei und Excel-Daten einlesen
         email_body_template, hyperlinks = read_word_file_with_hyperlinks(word_file_path)
         email_data = read_excel_data(excel_file_path)
@@ -235,6 +231,14 @@ def upload_files():
         excel_file.save(excel_file_path)
         signature_file.save(signature_path)
         logo_file.save(logo_path)
+
+        try:
+           # Überprüfe die Dateitypen vor dem Start
+           validate_file_type(word_file_path, '.docx')
+           validate_file_type(excel_file_path, '.xlsx')
+        except ValueError as ve:
+           # Rückgabe der Fehlermeldung an das Frontend
+           return jsonify({'error': str(ve)}), 400
 
         # Liste der Anhänge erstellen
         attachments = request.files.getlist('attachments')

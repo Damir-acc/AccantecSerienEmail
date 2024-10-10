@@ -255,8 +255,18 @@
                         // Starte die Überprüfung des Abschlusses
                         checkCompletion();
                     },
-                    error: function() {
-                        alert('Fehler beim Hochladen der Dateien.');
+                    error: function(xhr) {
+                        // Überprüfen, ob eine Fehlermeldung im JSON-Response vorhanden ist
+                        let errorMessage = 'Fehler beim Hochladen der Dateien.';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                           errorMessage = xhr.responseJSON.error;
+                        }
+
+                        // Zeige die Fehlermeldung in den Statusnachrichten an
+                        $('#statusMessages').empty();  // Lösche alte Statusmeldungen
+                        $('#statusMessages').append(`<li class="list-group-item">${errorMessage}</li>`);
+
+                        alert(errorMessage); // Zeige den Fehler als Popup
                         isSending = false;
                         submitButton.show(); // Zeigt den Senden-Button wieder an
                         abortButton.hide(); // Versteckt den Abbrechen-Button
