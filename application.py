@@ -89,11 +89,13 @@ def format_email_body(full_text, hyperlinks):
 
 # Funktion zur Validierung der Dateitypen basierend auf der Dateiendung
 def validate_file_type(file_path, expected_extension):
-    global status_messages, lock
+    global status_messages, lock, abort_flag, emails_completed
     _, file_extension = os.path.splitext(file_path)
     if file_extension.lower() != expected_extension:
         with lock:
            status_messages.append(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
+           abort_flag = True
+           emails_completed = True
         raise ValueError(f"Falscher Dateityp für {os.path.basename(file_path)}. Erwartet: {expected_extension}")
         
 
