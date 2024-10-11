@@ -24,8 +24,8 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
 
 # OAuth2 Konfigurationsdaten (Client-ID, Client-Secret, Tenant-ID)
-CLIENT_ID = '6ff7d6e9-6158-4840-8ea5-ca3ee2126efe'
-CLIENT_SECRET = 'oqb8Q~bU4aGIFCklu09VC5s-LyQn2.gU-k4Tram5'
+CLIENT_ID = 'dbda161e-50c1-423e-88c6-f4b6a4da1068'
+CLIENT_SECRET = 'Btp8Q~10ytEYDs6dFbyodk6PH4waXAij_1~ohdyg'
 TENANT_ID = '5929d0be-afb9-4b00-ad5f-55727c54f4e7'
 SCOPE = ["https://outlook.office365.com/.default"]  # Microsoft Graph Scope für SMTP
 REDIRECT_URI = 'https://accantecserienemail.azurewebsites.net/'
