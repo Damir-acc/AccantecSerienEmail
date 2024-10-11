@@ -51,7 +51,7 @@ def get_access_token():
     return token
 
 # Route für die Authentifizierung (Login)
-@app.route('/login')
+@app.route('/check_login')
 def login():
     msal_app = build_msal_app()
     auth_url = msal_app.get_authorization_request_url(SCOPE, redirect_uri=REDIRECT_URI)
