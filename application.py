@@ -47,7 +47,7 @@ def get_access_token():
     token = session.get('access_token')
     if not token:
         # Leitet den Benutzer zur Microsoft-Login-Seite weiter
-        return redirect(url_for('login'))
+        return redirect(url_for('check_login'))
     return token
 
 # Route für die Authentifizierung (Login)
