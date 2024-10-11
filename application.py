@@ -47,11 +47,11 @@ def get_access_token():
     token = session.get('access_token')
     if not token:
         # Leitet den Benutzer zur Microsoft-Login-Seite weiter
-        return redirect(url_for('check_login'))
+        return redirect(url_for('login'))
     return token
 
 # Route für die Authentifizierung (Login)
-@app.route('/check_login')
+@app.route('/login')
 def login():
     msal_app = build_msal_app()
     auth_url = msal_app.get_authorization_request_url(SCOPE, redirect_uri=REDIRECT_URI)
