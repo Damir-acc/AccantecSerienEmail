@@ -8,9 +8,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import threading  # Für den Thread-Safe-Mechanismus
 import time
+import msal  # OAuth2 für Microsoft Authentifizierung
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
@@ -22,9 +23,53 @@ lock = threading.Lock()  # Lock, um Threads zu synchronisieren
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
 
+# OAuth2 Konfigurationsdaten (Client-ID, Client-Secret, Tenant-ID)
+CLIENT_ID = '6ff7d6e9-6158-4840-8ea5-ca3ee2126efe'
+CLIENT_SECRET = 'oqb8Q~bU4aGIFCklu09VC5s-LyQn2.gU-k4Tram5'
+TENANT_ID = '5929d0be-afb9-4b00-ad5f-55727c54f4e7'
+SCOPE = ["https://outlook.office365.com/.default"]  # Microsoft Graph Scope für SMTP
+REDIRECT_URI = 'https://accantecserienemail.azurewebsites.net/'
+
 # Definiere den Upload-Ordner
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Erstellt den Ordner, falls er nicht existiert
+
+# MSAL Konfiguration
+def build_msal_app():
+    return msal.ConfidentialClientApplication(
+        CLIENT_ID,
+        authority=f"https://login.microsoftonline.com/{TENANT_ID}",
+        client_credential=CLIENT_SECRET
+    )
+
+# MSAL Funktion für die Authentifizierung und Abrufen des Access-Tokens
+def get_access_token():
+    token = session.get('access_token')
+    if not token:
+        # Leitet den Benutzer zur Microsoft-Login-Seite weiter
+        return redirect(url_for('login'))
+    return token
+
+# Route für die Authentifizierung (Login)
+@app.route('/login')
+def login():
+    msal_app = build_msal_app()
+    auth_url = msal_app.get_authorization_request_url(SCOPE, redirect_uri=REDIRECT_URI)
+    return redirect(auth_url)
+
+# Callback Route nach der Authentifizierung
+@app.route('/auth/callback')
+def auth_callback():
+    msal_app = build_msal_app()
+    code = request.args.get('code')
+    result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri=REDIRECT_URI)
+
+    if 'access_token' in result:
+        session['access_token'] = result['access_token']
+        return redirect(url_for('upload_files'))
+    else:
+        return jsonify({"error": "Authentifizierung fehlgeschlagen"}), 400
+
 
 # Funktion zum Lesen des Word-Dokuments und Extrahieren von Text und Hyperlinks
 def read_word_file_with_hyperlinks(word_file_path):
@@ -108,7 +153,7 @@ def validate_file_type(file_path, expected_extensions):
         raise ValueError(error_message)
 
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
-def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
+def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, access_token, attachments, logo_path):
     global progress_percentage, status_messages, abort_flag, emails_completed
     global lock  # Verwenden des Locks für Thread-Sicherheit
 
@@ -186,7 +231,8 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                 # E-Mail über den SMTP-Server senden
                 with smtplib.SMTP(smtp_server, smtp_port) as server:
                     server.starttls()
-                    server.login(username, password)
+                    auth_string = f"user={username}\1auth=Bearer {access_token}\1\1"
+                    server.docmd("AUTH XOAUTH2", auth_string.encode())
                     server.send_message(msg)
 
                 # Fortschritt und Statusmeldung aktualisieren (Thread-sicher)
@@ -270,9 +316,12 @@ def upload_files():
         smtp_server = 'smtp.office365.com'
         smtp_port = 587
 
+        # OAuth2 Access-Token holen
+        access_token = get_access_token()
+
         # Sende die E-Mails in einem separaten Thread
         from threading import Thread
-        thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path))
+        thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, access_token, attachment_filenames, logo_path))
         thread.start()
 
         return redirect(url_for('upload_files'))

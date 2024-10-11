@@ -58,7 +58,7 @@
             margin-bottom: 5px;
         }
 
-        input[type="text"], input[type="email"], input[type="password"], input[type="file"] {
+        input[type="text"], input[type="email"], input[type="file"] {
             padding: 10px;
             margin-bottom: 15px;
             border-radius: 4px;
@@ -125,7 +125,7 @@
                 font-size: 1.2rem;
             }
 
-            input[type="text"], input[type="email"], input[type="password"], input[type="file"], button[type="submit"] {
+            input[type="text"], input[type="email"], input[type="file"], button[type="submit"] {
                 font-size: 14px;
             }
         }
@@ -144,7 +144,13 @@
 <body>
     <div class="container">
         <h1>Accantec Serien E-Mails</h1>
-        <form id="emailForm" method="post" enctype="multipart/form-data">
+
+        <!-- OAuth2-Login-Button hinzufügen -->
+        <div id="loginSection">
+            <button id="loginButton">Mit Microsoft anmelden</button>
+        </div>
+
+        <form id="emailForm" method="post" enctype="multipart/form-data" style="display: none;">
             <div class="form-group">
                 <label for="word_file">Word-Datei:</label>
                 <input type="file" name="word_file" required>
@@ -166,10 +172,6 @@
                 <input type="email" name="email_user" required>
             </div>
             <div class="form-group">
-                <label for="email_pass">E-Mail Passwort:</label>
-                <input type="password" name="email_pass" required>
-            </div>
-            <div class="form-group">
                 <label for="attachments">Anhänge (optional):</label>
                 <input type="file" name="attachments" multiple>
             </div>
@@ -188,62 +190,25 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script>
-        // Bei Seitenladeereignis das Formular und den Fortschritt zurücksetzen
-        window.onload = function() {
-            document.getElementById("emailForm").reset(); // Setzt alle Formularfelder zurück
-            $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%'); // Setzt den Fortschritt zurück
-            $('#statusMessages').empty(); // Setzt die Statusmeldungen zurück
-        }
-
-        function fetchStatusMessages() {
-            $.get('/api/status', function(data) {
-                $('#statusMessages').empty();  // Lösche alte Statusmeldungen
-                data.forEach(function(message) {
-                    $('#statusMessages').append(`<li class="list-group-item">${message}</li>`);
-                });
-            });
-        }
-
-        function fetchProgress() {
-            $.get('/api/progress', function(data) {
-                var progress = data.progress;
-                $('#progressBar').css('width', progress + '%').attr('aria-valuenow', progress).text(progress + '%');
-            });
-        }
-
-        function checkCompletion() {
-            $.get('/api/complete', function(data) {
-                if (data.completed) {
-                    alert('E-Mail-Versand abgeschlossen.');
-                    // Zeige den Senden-Button wieder an und verstecke den Abbrechen-Button
-                    $('#submitButton').show();
-                    $('#abortButton').hide();
-                    // Fortschrittsanzeige zurücksetzen
-                    $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
-                    $('#statusMessages').empty(); // Statusmeldungen löschen
-                } else {
-                    setTimeout(checkCompletion, 1000);  // Wenn nicht abgeschlossen, wiederhole die Überprüfung
-                }
-            });
-        }
-
         // Statusmeldungen und Fortschritt alle paar Sekunden aktualisieren
         setInterval(fetchStatusMessages, 500);
         setInterval(fetchProgress, 500);
 
-        // Button-Logik: Umschalten zwischen "Senden" und "Abbrechen"
+        // OAuth2 Login
         $(document).ready(function() {
-            let isSending = false;
-            const submitButton = $('#submitButton');
-            const abortButton = $('#abortButton');
+            $('#loginButton').on('click', function() {
+                window.location.href = '/login';  // Leitet den Benutzer zur Microsoft-Anmeldung weiter
+            });
+
+            // Zeige das Formular an, wenn der Benutzer eingeloggt ist
+            checkLoginStatus();
 
             $('#emailForm').on('submit', function(e) {
-                e.preventDefault(); // Verhindert die Standardübermittlung
-                submitButton.hide(); // Versteckt den Senden-Button
-                abortButton.show(); // Zeigt den Abbrechen-Button an
-                isSending = true; // Setzt den Status auf "sendet"
+                e.preventDefault();  // Verhindert die Standardübermittlung
+                $('#submitButton').hide();
+                $('#abortButton').show();
 
-                const formData = new FormData(this); // Formulardaten erfassen
+                const formData = new FormData(this);  // Formulardaten erfassen
 
                 $.ajax({
                     url: '/',
@@ -252,40 +217,74 @@
                     processData: false,
                     contentType: false,
                     success: function(response) {
-                        // Starte die Überprüfung des Abschlusses
                         checkCompletion();
                     },
                     error: function(xhr) {
-                        // Überprüfen, ob eine Fehlermeldung im JSON-Response vorhanden ist
                         let errorMessage = 'Fehler beim Hochladen der Dateien.';
                         if (xhr.responseJSON && xhr.responseJSON.error) {
                            errorMessage = xhr.responseJSON.error;
                         }
 
-                        // Zeige die Fehlermeldung in den Statusnachrichten an
                         $('#statusMessages').empty();  // Lösche alte Statusmeldungen
                         $('#statusMessages').append(`<li class="list-group-item">${errorMessage}</li>`);
 
-                        alert(errorMessage); // Zeige den Fehler als Popup
-                        isSending = false;
-                        submitButton.show(); // Zeigt den Senden-Button wieder an
-                        abortButton.hide(); // Versteckt den Abbrechen-Button
+                        alert(errorMessage);
+                        $('#submitButton').show();
+                        $('#abortButton').hide();
                     }
                 });
             });
 
-            // Abbruch-Button-Klick-Ereignis
-            abortButton.on('click', function() {
-                if (isSending) {
-                    $.post('/api/abort', function(data) {
-                        alert(data.message);
-                        abortButton.hide(); // Versteckt den Abbrechen-Button
-                        submitButton.show(); // Zeigt den Senden-Button wieder an
-                        isSending = false; // Setzt den Status zurück
-                    });
-                }
+            // Abbruch-Button
+            $('#abortButton').on('click', function() {
+                $.post('/abort', function(data) {
+                    alert(data.message);
+                    $('#abortButton').hide();
+                    $('#submitButton').show();
+                });
             });
         });
+
+        // Funktion, um den Login-Status zu überprüfen
+        function checkLoginStatus() {
+            $.get('/check_login', function(response) {
+                if (response.logged_in) {
+                    $('#loginSection').hide();  // Verstecke den Login-Button
+                    $('#emailForm').show();     // Zeige das Formular
+                } else {
+                    $('#loginSection').show();  // Zeige den Login-Button
+                    $('#emailForm').hide();     // Verstecke das Formular
+                }
+            });
+        }
+
+        function fetchStatusMessages() {
+            $.get('/progress', function(data) {
+                $('#statusMessages').empty();  // Lösche alte Statusmeldungen
+                data.messages.forEach(function(message) {
+                    $('#statusMessages').append(`<li class="list-group-item">${message}</li>`);
+                });
+            });
+        }
+
+        function fetchProgress() {
+            $.get('/progress', function(data) {
+                var progress = data.progress;
+                $('#progressBar').css('width', progress + '%').attr('aria-valuenow', progress).text(progress + '%');
+            });
+        }
+
+        function checkCompletion() {
+            $.get('/progress', function(data) {
+                if (data.emails_completed) {
+                    alert('E-Mail-Versand abgeschlossen.');
+                    $('#submitButton').show();
+                    $('#abortButton').hide();
+                } else {
+                    setTimeout(checkCompletion, 1000);
+                }
+            });
+        }
     </script>
 </body>
 </html>
