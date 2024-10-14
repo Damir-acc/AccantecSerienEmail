@@ -12,6 +12,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 from authlib.integrations.flask_client import OAuth
 import threading  # Für den Thread-Safe-Mechanismus
 import time
+import secrets  # Für die Generierung des State-Wertes
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
@@ -239,36 +240,35 @@ def login():
     global status_messages, lock
     redirect_uri = url_for('auth', _external=True, _scheme='https')
 
-    status_messages.append(f"Before Session")
-    # Überprüfen, ob oauth.azure korrekt konfiguriert ist
-    try:
-        state = oauth.azure.state
-        if not state:
-            raise ValueError("State ist None. Überprüfen Sie die OAuth-Konfiguration.")
-
-        # Den state in der Sitzung speichern
-        session['oauth_state'] = state
-    except Exception as e:
-        with lock: 
-            status_messages.append(f"Fehler beim Speichern des States: {str(e)}")
-        return jsonify({'error': 'Internal Server Error'}), 500
+    # Generiere einen neuen State-Wert
+    state = secrets.token_urlsafe(16)
+    session['oauth_state'] = state  # Speichere den State in der Sitzung
 
     with lock: 
-       status_messages.append(f"Redirect URI: {redirect_uri}")
-       status_messages.append(f"In LOGIN!!!!")
-    return oauth.azure.authorize_redirect(redirect_uri)
+        status_messages.append(f"Redirect URI: {redirect_uri}")
+        status_messages.append(f"State gespeichert: {state}")
+
+    return oauth.azure.authorize_redirect(redirect_uri, state=state)
 
 @app.route('/auth')
 def auth():
     global status_messages, lock
     with lock: 
        status_messages.append(f"in AUTH")
+
+
     # Hier den Autorisierungscode abrufen
     code = request.args.get('code')
+    state = request.args.get('state')  # Holen Sie sich den zurückgegebenen State
+
+    # Überprüfe den State-Wert
+    if state != session.get('oauth_state'):
+        with lock:
+            status_messages.append("State-Wert stimmt nicht überein. Möglicher CSRF-Angriff.")
+        return jsonify({'error': 'Invalid state parameter.'}), 400
+    
     status_messages.append(f"Code provided: {code}")
-    #if not code:
-        #status_messages.append(f"Not Auth Code provided")
-    # Token abrufen
+
     try:
         token = oauth.azure.authorize_access_token()
         with lock:
