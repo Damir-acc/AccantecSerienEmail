@@ -232,7 +232,7 @@ def index():
 @app.route('/login')
 def login():
     global status_messages, lock
-    redirect_uri = 'https://accantecserienemail.azurewebsites.net/'
+    redirect_uri = url_for('auth', _external=True, _scheme='https')
     with lock: 
        status_messages.append(f"Redirect URI: {redirect_uri}")
        status_messages.append(f"In LOGIN!!!!")
@@ -244,6 +244,8 @@ def auth():
     token = oauth.azure.authorize_access_token()
     user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
     session['user'] = user  # Speichern der Benutzerdaten in der Sitzung
+    if not token:
+       return jsonify({'error': 'Token konnte nicht abgerufen werden.'}), 400
     with lock: 
        status_messages.append(f"Benutzer {user}")
     return redirect(url_for('upload_files'))
