@@ -231,15 +231,20 @@ def index():
 
 @app.route('/login')
 def login():
+    global status_messages, lock
+    with lock: 
+       status_messages.append(f"In LOGIN!!!!")
     redirect_uri = url_for('auth', _external=True)
     return oauth.azure.authorize_redirect(redirect_uri)
 
 @app.route('/auth')
 def auth():
+    global status_messages, lock
     token = oauth.azure.authorize_access_token()
     user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
     session['user'] = user  # Speichern der Benutzerdaten in der Sitzung
-    status_messages.append(f"Benutzer {user}")
+    with lock: 
+       status_messages.append(f"Benutzer {user}")
     return redirect(url_for('upload_files'))
 
 @app.route('/upload', methods=['GET', 'POST'])
