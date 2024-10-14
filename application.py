@@ -234,6 +234,7 @@ def login():
     global status_messages, lock
     redirect_uri = url_for('auth', _external=True, _scheme='https')
 
+    status_messages.append(f"Before Session")
     # Den state in der Sitzung speichern
     session['oauth_state'] = oauth.azure.state
 
