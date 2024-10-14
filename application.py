@@ -244,11 +244,20 @@ def auth():
     with lock: 
        status_messages.append(f"in AUTH")
     # Hier den Autorisierungscode abrufen
-    code = request.args.get('code')
-    status_messages.append(f"Code provided: {code}")
-    if not code:
-        status_messages.append(f"Not Auth Code provided")
-    token = oauth.azure.authorize_access_token()
+    #code = request.args.get('code')
+    #status_messages.append(f"Code provided: {code}")
+    #if not code:
+        #status_messages.append(f"Not Auth Code provided")
+    # Token abrufen
+    try:
+        token = oauth.azure.authorize_access_token()
+        with lock:
+            status_messages.append("Zugriffstoken erfolgreich abgerufen.")
+    except Exception as e:
+        with lock:
+            status_messages.append(f"Fehler beim Abrufen des Zugriffstokens: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve access token.'}), 500
+    #token = oauth.azure.authorize_access_token()
     with lock: 
        status_messages.append(f"in AUTH after authorize access token")
     user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
