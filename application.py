@@ -245,6 +245,7 @@ def auth():
        status_messages.append(f"in AUTH")
     # Hier den Autorisierungscode abrufen
     code = request.args.get('code')
+    status_messages.append(f"Code provided: {code}")
     if not code:
         status_messages.append(f"Not Auth Code provided")
     token = oauth.azure.authorize_access_token()
@@ -330,9 +331,9 @@ def upload_files():
         thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, token, attachment_filenames, logo_path))
         thread.start()
 
-        return redirect(url_for('upload_files'))
+        return redirect(url_for('index'))
 
-    return render_template('upload.html', user=session['user'])
+    return render_template('index.html', user=session['user'])
 
 @app.route('/api/abort', methods=['POST'])
 def abort():
