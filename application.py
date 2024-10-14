@@ -12,6 +12,8 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 import threading  # Für den Thread-Safe-Mechanismus
 import time
 import msal  # OAuth2 für Microsoft Authentifizierung
+import base64
+import hashlib
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
@@ -34,6 +36,13 @@ REDIRECT_URI = 'https://accantecserienemail.azurewebsites.net/'
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Erstellt den Ordner, falls er nicht existiert
 
+def generate_code_verifier_and_challenge():
+    # Erstelle einen Code Verifier
+    code_verifier = base64.urlsafe_b64encode(os.urandom(32)).decode('utf-8').rstrip("=")
+    # Erstelle die Code Challenge
+    code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode()).digest()).decode('utf-8').rstrip("=")
+    return code_verifier, code_challenge
+
 # MSAL Konfiguration
 def build_msal_app():
     return msal.ConfidentialClientApplication(
@@ -50,11 +59,12 @@ def get_access_token():
         return redirect(url_for('login'))
     return token
 
-# Route für die Authentifizierung (Login)
-@app.route('/login')
+@app.route('/check_login')
 def login():
     msal_app = build_msal_app()
-    auth_url = msal_app.get_authorization_request_url(SCOPE, redirect_uri=REDIRECT_URI)
+    code_verifier, code_challenge = generate_code_verifier_and_challenge()
+    session['code_verifier'] = code_verifier  # Speichere den Code Verifier in der Session
+    auth_url = msal_app.get_authorization_request_url(SCOPE, redirect_uri=REDIRECT_URI, code_challenge=code_challenge, code_challenge_method='S256')
     return redirect(auth_url)
 
 # Callback Route nach der Authentifizierung
@@ -62,7 +72,8 @@ def login():
 def auth_callback():
     msal_app = build_msal_app()
     code = request.args.get('code')
-    result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri=REDIRECT_URI)
+    code_verifier = session.get('code_verifier')  # Hol den Code Verifier aus der Session
+    result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri=REDIRECT_URI, code_verifier=code_verifier)
 
     if 'access_token' in result:
         session['access_token'] = result['access_token']
