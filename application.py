@@ -307,7 +307,6 @@ def upload_files():
         # SMTP-Server-Einstellungen
         smtp_server = 'smtp.office365.com'
         smtp_port = 587
-        password = 'YOUR_SMTP_PASSWORD'  # Hier ist dein SMTP-Passwort erforderlich
 
         # Sende die E-Mails in einem separaten Thread
         from threading import Thread
