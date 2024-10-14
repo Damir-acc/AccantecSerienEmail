@@ -27,7 +27,6 @@ app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
 
 # OAuth2 Konfigurationsdaten (Client-ID, Client-Secret, Tenant-ID)
 CLIENT_ID = 'dbda161e-50c1-423e-88c6-f4b6a4da1068'
-CLIENT_SECRET = 'Btp8Q~10ytEYDs6dFbyodk6PH4waXAij_1~ohdyg'
 TENANT_ID = '5929d0be-afb9-4b00-ad5f-55727c54f4e7'
 SCOPE = ["https://outlook.office365.com/.default"]  # Microsoft Graph Scope für SMTP
 REDIRECT_URI = 'https://accantecserienemail.azurewebsites.net/'
@@ -48,7 +47,6 @@ def build_msal_app():
     return msal.ConfidentialClientApplication(
         CLIENT_ID,
         authority=f"https://login.microsoftonline.com/{TENANT_ID}",
-        client_credential=CLIENT_SECRET
     )
 
 # MSAL Funktion für die Authentifizierung und Abrufen des Access-Tokens
@@ -64,7 +62,7 @@ def login():
     msal_app = build_msal_app()
     code_verifier, code_challenge = generate_code_verifier_and_challenge()
     session['code_verifier'] = code_verifier  # Speichere den Code Verifier in der Session
-    auth_url = msal_app.get_authorization_request_url(SCOPE, redirect_uri=REDIRECT_URI, code_challenge=code_challenge, code_challenge_method='S256')
+    auth_url = msal_app.get_authorization_request_url(SCOPE, redirect_uri=REDIRECT_URI, code_challenge=code_challenge, code_challenge_method='S256', state=session.get('state'), nonce=session.get('nonce'))
     return redirect(auth_url)
 
 # Callback Route nach der Authentifizierung
