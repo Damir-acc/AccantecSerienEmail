@@ -32,7 +32,7 @@ oauth.register(
     access_token_url='https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/token',
     authorize_url='https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/authorize',
     api_base_url='https://graph.microsoft.com/v1.0/',
-    client_kwargs={'scope': 'openid profile email'},
+    client_kwargs={'scope': 'openid profile email', 'code_challenge_method': 'S256'},  # PKCE aktivieren
 )
 
 # Definiere den Upload-Ordner
