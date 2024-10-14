@@ -232,9 +232,10 @@ def index():
 @app.route('/login')
 def login():
     global status_messages, lock
-    with lock: 
-       status_messages.append(f"In LOGIN!!!!")
     redirect_uri = url_for('auth', _external=True)
+    with lock: 
+       status_messages.append(f"Redirect URI: {redirect_uri}")
+       status_messages.append(f"In LOGIN!!!!")
     return oauth.azure.authorize_redirect(redirect_uri)
 
 @app.route('/auth')
