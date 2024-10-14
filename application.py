@@ -59,7 +59,7 @@ def get_access_token():
         return redirect(url_for('login'))
     return token
 
-@app.route('/check_login')
+@app.route('/login')
 def login():
     msal_app = build_msal_app()
     code_verifier, code_challenge = generate_code_verifier_and_challenge()
