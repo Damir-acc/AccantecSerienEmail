@@ -235,8 +235,18 @@ def login():
     redirect_uri = url_for('auth', _external=True, _scheme='https')
 
     status_messages.append(f"Before Session")
-    # Den state in der Sitzung speichern
-    session['oauth_state'] = oauth.azure.state
+    # Überprüfen, ob oauth.azure korrekt konfiguriert ist
+    try:
+        state = oauth.azure.state
+        if not state:
+            raise ValueError("State ist None. Überprüfen Sie die OAuth-Konfiguration.")
+
+        # Den state in der Sitzung speichern
+        session['oauth_state'] = state
+    except Exception as e:
+        with lock: 
+            status_messages.append(f"Fehler beim Speichern des States: {str(e)}")
+        return jsonify({'error': 'Internal Server Error'}), 500
 
     with lock: 
        status_messages.append(f"Redirect URI: {redirect_uri}")
