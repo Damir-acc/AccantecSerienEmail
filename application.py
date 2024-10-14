@@ -239,6 +239,7 @@ def auth():
     token = oauth.azure.authorize_access_token()
     user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
     session['user'] = user  # Speichern der Benutzerdaten in der Sitzung
+    status_messages.append(f"Benutzer {user}")
     return redirect(url_for('upload_files'))
 
 @app.route('/upload', methods=['GET', 'POST'])
