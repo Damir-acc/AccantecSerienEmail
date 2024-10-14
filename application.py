@@ -29,7 +29,6 @@ oauth = OAuth(app)
 oauth.register(
     name='azure',
     client_id='dbda161e-50c1-423e-88c6-f4b6a4da1068',  # Deine Client-ID hier einfügen
-    client_secret='aD78Q~5oJLOCqCBsLIwBaVNSJjbB1oenWfzKebi3',  # Dein Client-Secret hier einfügen
     access_token_url='https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/token',
     authorize_url='https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/authorize',
     api_base_url='https://graph.microsoft.com/v1.0/',
