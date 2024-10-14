@@ -228,7 +228,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                     logo.add_header('Content-Disposition', 'inline', filename=os.path.basename(logo_path))
                     msg.attach(logo)
             except Exception as e:
-                print(f'Fehler beim Einbetten des Logos: {e}')
+                status_messages.append(f'Fehler beim Einbetten des Logos: {e}')
 
             # Anhänge hinzufügen
             for attachment_filename in attachments:
@@ -240,7 +240,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                             part['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
                             msg.attach(part)
                     except Exception as e:
-                        print(f'Fehler beim Anhängen der Datei "{attachment_path}": {e}')
+                        status_messages.append(f'Fehler beim Anhängen der Datei "{attachment_path}": {e}')
                 else:
                     print(f'Anhang für {email} konnte nicht hinzugefügt werden. Datei "{attachment_path}" nicht gefunden oder ist das Logo.')
 
