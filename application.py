@@ -243,6 +243,10 @@ def auth():
     global status_messages, lock
     with lock: 
        status_messages.append(f"in AUTH")
+    # Hier den Autorisierungscode abrufen
+    code = request.args.get('code')
+    if not code:
+        status_messages.append(f"Not Auth Code provided")
     token = oauth.azure.authorize_access_token()
     with lock: 
        status_messages.append(f"in AUTH after authorize access token")
