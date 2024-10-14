@@ -229,6 +229,11 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
 def index():
     return render_template('index.html')
 
+@app.route('/test_session')
+def test_session():
+    session['test'] = 'test_value'
+    return session['test']
+
 @app.route('/login')
 def login():
     global status_messages, lock
