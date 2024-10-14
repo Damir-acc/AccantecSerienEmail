@@ -149,7 +149,11 @@
 <body>
     <div class="container">
         <h1>Accantec Serien E-Mails</h1>
-        <form id="emailForm" method="post" enctype="multipart/form-data">
+        <form id="loginForm" method="get" action="/login">
+            <button type="submit">Login</button>
+        </form>
+
+        <form id="emailForm" method="post" enctype="multipart/form-data" style="display:none;">
             <div class="form-group">
                 <label for="word_file">Word-Datei:</label>
                 <input type="file" name="word_file" required>
@@ -192,12 +196,13 @@
     <script>
         // Bei Seitenladeereignis das Formular und den Fortschritt zurücksetzen
         window.onload = function() {
-            document.getElementById("emailForm").reset(); // Setzt alle Formularfelder zurück
+            $('#emailForm').hide(); // Verstecke das E-Mail-Formular
             $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%'); // Setzt den Fortschritt zurück
             $('#statusMessages').empty(); // Setzt die Statusmeldungen zurück
             $('#overallStatus').text(''); // Setzt den Gesamtstatus zurück
         }
 
+        // Statusmeldungen abrufen
         function fetchStatusMessages() {
             $.get('/api/status', function(data) {
                 $('#statusMessages').empty();  // Lösche alte Statusmeldungen
@@ -207,6 +212,7 @@
             });
         }
 
+        // Fortschritt abrufen
         function fetchProgress() {
             $.get('/api/progress', function(data) {
                 var progress = data.progress;
@@ -214,6 +220,7 @@
             });
         }
 
+        // Abschlussprüfung
         function checkCompletion() {
             $.get('/api/complete', function(data) {
                 if (data.completed) {
@@ -239,6 +246,7 @@
             const submitButton = $('#submitButton');
             const abortButton = $('#abortButton');
 
+            // E-Mail-Formular einreichen
             $('#emailForm').on('submit', function(e) {
                 e.preventDefault(); // Verhindert die Standardübermittlung
                 submitButton.hide(); // Versteckt den Senden-Button
@@ -287,6 +295,13 @@
                         isSending = false; // Setzt den Status zurück
                     });
                 }
+            });
+
+            // Benutzeranmeldung und Formularanzeige
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault(); // Verhindert die Standardübermittlung
+                $('#loginForm').hide(); // Versteckt das Login-Formular
+                $('#emailForm').show(); // Zeigt das E-Mail-Formular an
             });
         });
     </script>
