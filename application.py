@@ -244,13 +244,15 @@ def auth():
     with lock: 
        status_messages.append(f"in AUTH")
     token = oauth.azure.authorize_access_token()
+    with lock: 
+       status_messages.append(f"in AUTH after authorize access token")
     user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
     session['user'] = user  # Speichern der Benutzerdaten in der Sitzung
     if not token:
        return jsonify({'error': 'Token konnte nicht abgerufen werden.'}), 400
     with lock: 
        status_messages.append(f"Benutzer {user}")
-    return redirect(url_for('upload_files'))
+    return redirect(url_for('/'))
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_files():
