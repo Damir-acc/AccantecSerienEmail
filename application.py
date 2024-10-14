@@ -232,7 +232,7 @@ def index():
 @app.route('/login')
 def login():
     global status_messages, lock
-    redirect_uri = url_for('auth', _external=True)
+    redirect_uri = 'https://accantecserienemail.azurewebsites.net/'
     with lock: 
        status_messages.append(f"Redirect URI: {redirect_uri}")
        status_messages.append(f"In LOGIN!!!!")
