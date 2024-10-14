@@ -233,6 +233,10 @@ def index():
 def login():
     global status_messages, lock
     redirect_uri = url_for('auth', _external=True, _scheme='https')
+
+    # Den state in der Sitzung speichern
+    session['oauth_state'] = oauth.azure.state
+
     with lock: 
        status_messages.append(f"Redirect URI: {redirect_uri}")
        status_messages.append(f"In LOGIN!!!!")
@@ -244,8 +248,8 @@ def auth():
     with lock: 
        status_messages.append(f"in AUTH")
     # Hier den Autorisierungscode abrufen
-    #code = request.args.get('code')
-    #status_messages.append(f"Code provided: {code}")
+    code = request.args.get('code')
+    status_messages.append(f"Code provided: {code}")
     #if not code:
         #status_messages.append(f"Not Auth Code provided")
     # Token abrufen
