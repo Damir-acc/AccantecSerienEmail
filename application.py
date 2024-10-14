@@ -241,6 +241,8 @@ def login():
 @app.route('/auth')
 def auth():
     global status_messages, lock
+    with lock: 
+       status_messages.append(f"in AUTH")
     token = oauth.azure.authorize_access_token()
     user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
     session['user'] = user  # Speichern der Benutzerdaten in der Sitzung
