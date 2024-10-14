@@ -247,7 +247,7 @@
 
         // Funktion, um den Login-Status zu überprüfen
         function checkLoginStatus() {
-            $.get('/login', function(response) {
+            $.get('/login_status', function(response) {
                 if (response.logged_in) {
                     $('#loginSection').hide();  // Verstecke den Login-Button
                     $('#emailForm').show();     // Zeige das Formular

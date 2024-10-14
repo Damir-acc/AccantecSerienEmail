@@ -68,16 +68,24 @@ def login():
 # Callback Route nach der Authentifizierung
 @app.route('/auth/callback')
 def auth_callback():
-    msal_app = build_msal_app()
-    code = request.args.get('code')
-    code_verifier = session.get('code_verifier')  # Hol den Code Verifier aus der Session
-    result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri=REDIRECT_URI, code_verifier=code_verifier)
+    msal_app = build_msal_app()  # Stelle sicher, dass dies richtig konfiguriert ist
+    code = request.args.get('code')  # Authorization Code aus der URL
+    code_verifier = session.get('code_verifier')  # Der zuvor gespeicherte Code Verifier
 
+    # Tausche den Authorization Code gegen ein Access-Token aus
+    result = msal_app.acquire_token_by_authorization_code(
+        code,
+        scopes=SCOPE,  # Stelle sicher, dass hier die korrekten Berechtigungen angefordert werden
+        redirect_uri=REDIRECT_URI,  # Hier sollte deine Callback-URL stehen
+        code_verifier=code_verifier
+    )
+
+    # Überprüfe, ob das Access-Token erhalten wurde
     if 'access_token' in result:
-        session['access_token'] = result['access_token']
-        return redirect(url_for('upload_files'))
+        session['access_token'] = result['access_token']  # Speichere das Access-Token in der Session
+        return redirect('/')  # Weiterleiten zur Hauptseite nach erfolgreichem Login
     else:
-        return jsonify({"error": "Authentifizierung fehlgeschlagen"}), 400
+        return jsonify({"error": "Fehler bei der Authentifizierung"}), 400
 
 
 # Funktion zum Lesen des Word-Dokuments und Extrahieren von Text und Hyperlinks
@@ -361,6 +369,14 @@ def check_complete():
     global emails_completed
     with lock:
         return jsonify({"completed": emails_completed}), 200
+    
+@app.route('/api/login_status', methods=['GET'])
+def login_status():
+    access_token = session.get('access_token')
+    if access_token:
+        return jsonify({"logged_in": True})
+    else:
+        return jsonify({"logged_in": False})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
