@@ -279,9 +279,14 @@ def auth_popup():
         #if not callable(oauth.azure.authorize_url):
         #    return jsonify({"error": "authorize_url ist kein callable."}), 500
         #authorization_url = f"{authorize_url}?client_id={client_id}&response_type=code&redirect_uri={redirect_uri}&state={state}&scope=User.Read"
-        authorization_url_test = oauth.azure.authorize_url(redirect_uri, state=state)
+        #authorization_url_test = oauth.azure.authorize_url(redirect_uri, state=state)
+        # Manuelles Erstellen der Autorisierungs-URL
+        authorization_url = (
+            f"https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/authorize?"
+            f"client_id={oauth.azure.client_id}&response_type=code&redirect_uri={redirect_uri}&state={state}&scope={oauth.azure.client_kwargs['scope']}"
+        )
         with lock:
-            status_messages.append(f"Authorization URL: {authorization_url_test}")
+            status_messages.append(f"Authorization URL: {authorization_url}")
         # Der Microsoft Teams SDK erwartet eine JavaScript-basierte Weiterleitung.
         return f"""
         <script>
@@ -289,7 +294,7 @@ def auth_popup():
             localStorage.setItem('oauth_state', '{state}');
 
             // Weiterleiten zur OAuth2-Seite
-            window.location.href = '{authorization_url_test}';
+            window.location.href = '{authorization_url}';
         </script>
         """
     except Exception as e:
