@@ -26,6 +26,7 @@ lock = threading.Lock()  # Lock, um Threads zu synchronisieren
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
+app.config['SESSION_TYPE'] = 'filesystem'
 # Sicherstellen, dass die Cookies für HTTPS korrekt gesetzt werden
 app.config['SESSION_COOKIE_SECURE'] = True  # Nur über HTTPS senden
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Schutz vor JavaScript-Zugriff
