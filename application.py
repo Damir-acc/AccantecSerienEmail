@@ -255,6 +255,8 @@ def login():
     with lock: 
         status_messages.append(f"State gespeichert: {state}")
     
+    status_messages.append(f"oauth_state in Session bei Login: {session.get('oauth_state')}")
+    
     return oauth.azure.authorize_redirect(redirect_uri, state=state)  # State-Wert übergeben
 
 @app.route('/auth')
@@ -274,6 +276,8 @@ def auth():
     # Den Autorisierungscode abrufen
     code = request.args.get('code')
     status_messages.append(f"Code provided: {code}")
+
+    status_messages.append(f"oauth_state in Session nach Rückleitung: {session.get('oauth_state')}")
 
     # Token abrufen
     try:
