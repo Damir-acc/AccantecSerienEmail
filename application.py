@@ -344,21 +344,32 @@ def auth():
     try:
         response = requests.post(token_url, data=data)
         if response.ok:
-            token = response.json()
+            token = response.json()  # Der Token ist jetzt in der 'token'-Variablen.
             with lock:
                 status_messages.append(f"Token: {token}")
             session['token'] = token  # Token in der Session speichern
 
-            # Benutzerdaten abrufen
-            user = oauth.azure.get('me').json()
-            with lock:
-                status_messages.append(f"User: {user}")
-            session['user'] = user
+            # Benutzerdaten mit access_token abrufen
+            headers = {
+                'Authorization': f"Bearer {token['access_token']}",
+                'Content-Type': 'application/json'
+            }
+            user_info_response = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
             
+            if user_info_response.ok:
+                user = user_info_response.json()
+                with lock:
+                    status_messages.append(f"User: {user}")
+                session['user'] = user
+            else:
+                with lock:
+                    status_messages.append(f"Error retrieving user info: {user_info_response.text}")
+                return jsonify({"error": "Error retrieving user info"}), 400
+
         else:
             with lock:
                 status_messages.append(f"Error response: {response.text}")
-            return f"Error retrieving token: {response.text}", 400
+            return jsonify({"error": f"Error retrieving token: {response.text}"}), 400
             
     except Exception as e:
         with lock:
@@ -376,6 +387,7 @@ def auth():
         microsoftTeams.authentication.notifySuccess("Login successful");
     </script>
     """
+
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_files():
