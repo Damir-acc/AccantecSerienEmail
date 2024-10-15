@@ -3,6 +3,7 @@ import re
 import shutil
 import pandas as pd
 import smtplib
+from datetime import timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
@@ -30,6 +31,7 @@ app.config['SESSION_COOKIE_SECURE'] = True  # Nur über HTTPS senden
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Schutz vor JavaScript-Zugriff
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Schutz vor CSRF-Angriffen, kann auch 'Strict' sein
 app.config['SESSION_PERMANENT'] = False  # Nicht-permanente Sitzung verwenden, um sicherzustellen, dass Cookies schnell aktualisiert werden
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 csrf = CSRFProtect(app)
 
 # OAuth Konfiguration
