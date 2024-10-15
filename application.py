@@ -268,6 +268,7 @@ def auth():
     # Überprüfen des State-Werts
     state = request.args.get('state')
     status_messages.append(f"State nach Rückleitung: {state}")
+    status_messages.append(f"oauth_state in Session nach Rückleitung: {session.get('oauth_state')}")
     if state != session.get('oauth_state'):
         with lock:
             status_messages.append("State-Wert stimmt nicht überein. Möglicher CSRF-Angriff.")
@@ -276,8 +277,6 @@ def auth():
     # Den Autorisierungscode abrufen
     code = request.args.get('code')
     status_messages.append(f"Code provided: {code}")
-
-    status_messages.append(f"oauth_state in Session nach Rückleitung: {session.get('oauth_state')}")
 
     # Token abrufen
     try:
