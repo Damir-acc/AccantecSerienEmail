@@ -319,8 +319,12 @@ def auth():
     
     try:
         token = oauth.azure.authorize_access_token()  # Token abrufen
+        with lock:
+           status_messages.append(f"Token: {token}")
         session['token'] = token  # Token in der Session speichern
         user = oauth.azure.get('me').json()  # Benutzerdaten abrufen
+        with lock:
+           status_messages.append(f"User: {user}")
         session['user'] = user
     except Exception as e:
         return f"""
