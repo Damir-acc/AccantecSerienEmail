@@ -328,6 +328,7 @@ def auth():
         session['user'] = user
     except Exception as e:
         with lock:
+           status_messages.append(f"Error retrieving token: {str(e)}")
            status_messages.append(f"Error retrieving token!!!!")
         return f"""
         <script>
