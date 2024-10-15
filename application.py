@@ -22,6 +22,7 @@ emails_completed = False  # Neue Variable, um den Abschluss zu verfolgen
 lock = threading.Lock()  # Lock, um Threads zu synchronisieren
 
 app = Flask(__name__)
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
 
 # OAuth Konfiguration
