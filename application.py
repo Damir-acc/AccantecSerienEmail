@@ -266,9 +266,12 @@ def auth_popup():
        status_messages.append("In Auth PopUp")
     # OAuth-Flow starten
     redirect_uri = url_for('auth', _external=True, _scheme='https')
+    # Generiere einen zufälligen state-Wert
+    state = secrets.token_urlsafe(16)
+    session['oauth_state'] = state  # Speichere den state in der Sitzung
     with lock:
        status_messages.append(f"Redirect URL: {redirect_uri}")
-    authorization_url, state = oauth.azure.authorize_redirect(redirect_uri)
+    authorization_url, state = oauth.azure.authorize_redirect(redirect_uri, state=state)
     with lock:
        status_messages.append(f"After authorization redirect")
 
@@ -289,6 +292,16 @@ def auth():
     with lock:
        status_messages.append("In Auth")
     token = None
+
+    # Überprüfe den state-Parameter aus der Sitzung
+    state = session.get('oauth_state')
+    # Hole den state-Parameter aus der Anfrage
+    request_state = request.args.get('state')
+    
+    # Vergleiche die beiden state-Werte
+    if state != request_state:
+        return jsonify({"error": "State mismatch. Potential CSRF attack."}), 400
+    
     try:
         token = oauth.azure.authorize_access_token()  # Token abrufen
         session['token'] = token  # Token in der Session speichern
