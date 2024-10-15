@@ -273,7 +273,8 @@ def auth_popup():
     with lock:
        status_messages.append(f"Redirect URL: {redirect_uri}")
     try:
-        authorization_url, state = oauth.azure.authorize_redirect(redirect_uri, state=state)
+        # Authorization URL generieren
+        authorization_url = oauth.azure.authorize_url(redirect_uri, state=state)
         with lock:
             status_messages.append(f"Authorization URL: {authorization_url}")
         # Der Microsoft Teams SDK erwartet eine JavaScript-basierte Weiterleitung.
