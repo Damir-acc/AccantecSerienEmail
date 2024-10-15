@@ -239,6 +239,7 @@ def login():
     global status_messages, lock
     redirect_uri = url_for('auth', _external=True, _scheme='https')
 
+    status_messages.append(f"in LOGIN")
     state = oauth.azure.state
     if not state:
         state = "unique_state_value"  # Erstellen Sie einen eindeutigen Zustand
