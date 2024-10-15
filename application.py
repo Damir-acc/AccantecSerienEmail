@@ -245,6 +245,7 @@ def login():
     # Generiere einen neuen State-Wert
     state = secrets.token_urlsafe(16)
     session['oauth_state'] = state  # Speichere den State in der Sitzung
+    session.modified = True
     status_messages.append(f"State bei der Umleitung: {state}")
 
     with lock: 
