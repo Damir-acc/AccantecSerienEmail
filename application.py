@@ -306,8 +306,12 @@ def auth():
 
     # Überprüfe den state-Parameter aus der Sitzung
     state = session.get('oauth_state')
+    with lock:
+       status_messages.append(f"State: {state}")
     # Hole den state-Parameter aus der Anfrage
     request_state = request.args.get('state')
+    with lock:
+       status_messages.append(f"Request-State: {request_state}")
     
     # Vergleiche die beiden state-Werte
     if state != request_state:
