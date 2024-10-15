@@ -239,35 +239,36 @@ def login():
     global status_messages, lock
     redirect_uri = url_for('auth', _external=True, _scheme='https')
 
-    # Generiere einen neuen State-Wert
-    state = secrets.token_urlsafe(16)
-    session['oauth_state'] = state  # Speichere den State in der Sitzung
+    state = oauth.azure.state
+    if not state:
+        state = "unique_state_value"  # Erstellen Sie einen eindeutigen Zustand
+        session['oauth_state'] = state
 
+    # Speichern Sie den State-Wert in der Sitzung
+    session['oauth_state'] = state
     with lock: 
-        status_messages.append(f"Redirect URI: {redirect_uri}")
         status_messages.append(f"State gespeichert: {state}")
-
-    return oauth.azure.authorize_redirect(redirect_uri, state=state)
+    
+    return oauth.azure.authorize_redirect(redirect_uri, state=state)  # State-Wert übergeben
 
 @app.route('/auth')
 def auth():
     global status_messages, lock
     with lock: 
-       status_messages.append(f"in AUTH")
-
-
-    # Hier den Autorisierungscode abrufen
-    code = request.args.get('code')
-    state = request.args.get('state')  # Holen Sie sich den zurückgegebenen State
-
-    # Überprüfe den State-Wert
+        status_messages.append(f"in AUTH")
+    
+    # Überprüfen des State-Werts
+    state = request.args.get('state')
     if state != session.get('oauth_state'):
         with lock:
             status_messages.append("State-Wert stimmt nicht überein. Möglicher CSRF-Angriff.")
-        return jsonify({'error': 'Invalid state parameter.'}), 400
+        return jsonify({'error': 'State mismatch. Potential CSRF attack.'}), 403  # CSRF-Schutz
     
+    # Den Autorisierungscode abrufen
+    code = request.args.get('code')
     status_messages.append(f"Code provided: {code}")
 
+    # Token abrufen
     try:
         token = oauth.azure.authorize_access_token()
         with lock:
@@ -276,16 +277,12 @@ def auth():
         with lock:
             status_messages.append(f"Fehler beim Abrufen des Zugriffstokens: {str(e)}")
         return jsonify({'error': 'Failed to retrieve access token.'}), 500
-    #token = oauth.azure.authorize_access_token()
-    with lock: 
-       status_messages.append(f"in AUTH after authorize access token")
+
     user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
     session['user'] = user  # Speichern der Benutzerdaten in der Sitzung
-    if not token:
-       return jsonify({'error': 'Token konnte nicht abgerufen werden.'}), 400
     with lock: 
-       status_messages.append(f"Benutzer {user}")
-    return redirect(url_for('/'))
+        status_messages.append(f"Benutzer {user}")
+    return redirect(url_for('index'))
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_files():
