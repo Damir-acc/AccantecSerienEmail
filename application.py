@@ -256,11 +256,10 @@ def login():
     redirect_uri = url_for('auth', _external=True, _scheme='https')
     status_messages.append(f"in LOGIN after redirect URL")
 
-
     # Generiere einen neuen State-Wert
     state = secrets.token_urlsafe(16)
     session['oauth_state'] = state  # Speichere den State in der Sitzung
-    session.modified = True
+    session.modified = True  # Markiere die Sitzung als geändert
     status_messages.append(f"State bei der Umleitung: {state}")
 
     with lock: 
@@ -294,6 +293,8 @@ def auth():
         token = oauth.azure.authorize_access_token()
         with lock:
             status_messages.append("Zugriffstoken erfolgreich abgerufen.")
+        # Entferne den oauth_state aus der Sitzung
+        session.pop('oauth_state', None)
     except Exception as e:
         with lock:
             status_messages.append(f"Fehler beim Abrufen des Zugriffstokens: {str(e)}")
