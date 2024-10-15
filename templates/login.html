@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://statics.teams.cdn.office.net/sdk/v1.10.0/js/MicrosoftTeams.min.js"></script>
+    <script>
+        microsoftTeams.initialize();
+
+        // Starte den Authentifizierungs-Flow
+        function initiateLogin() {
+            microsoftTeams.authentication.authenticate({
+                url: window.location.origin + "/auth_popup",  // Popup-Route, um den OAuth-Flow zu starten
+                width: 600,
+                height: 535,
+                successCallback: function (result) {
+                    console.log("Login erfolgreich: ", result);
+                    window.location.href = "/";  // Bei Erfolg zur Startseite weiterleiten
+                },
+                failureCallback: function (error) {
+                    console.error("Login fehlgeschlagen: ", error);
+                    alert("Login fehlgeschlagen: " + error);
+                }
+            });
+        }
+
+        // Auslösen, sobald die Seite geladen ist
+        window.onload = initiateLogin;
+    </script>
+</head>
+<body>
+    <h1>Microsoft Teams OAuth2 Login</h1>
+    <p>Bitte warten Sie, während Sie angemeldet werden...</p>
+</body>
+</html>

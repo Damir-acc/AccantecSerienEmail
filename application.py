@@ -252,49 +252,47 @@ def test_session():
 
 @app.route('/login')
 def login():
-    # Generiere den State-Wert
-    state = secrets.token_urlsafe(16)
-    
-    # Speichere den State im localStorage (dies wird über den Client-Browser gemacht)
-    script = f"""
+    # Hier wird keine Weiterleitung zu OAuth2 durchgeführt, sondern das Teams SDK verwendet
+    return render_template('login.html')
+
+@app.route('/auth_popup')
+def auth_popup():
+    # OAuth-Flow starten
+    redirect_uri = url_for('auth_callback', _external=True, _scheme='https')
+    authorization_url, state = oauth.azure.authorize_redirect(redirect_uri)
+
+    # Der Microsoft Teams SDK erwartet eine JavaScript-basierte Weiterleitung.
+    return f"""
     <script>
+        // Den State-Wert, wenn nötig, im localStorage speichern
         localStorage.setItem('oauth_state', '{state}');
-        window.location.href = '{url_for('auth', _external=True, _scheme='https')}';
+
+        // Weiterleiten zur OAuth2-Seite
+        window.location.href = '{authorization_url}';
     </script>
     """
-    return script
 
-@app.route('/auth')
-def auth():
-    # Abrufen des übergebenen State-Werts von Microsoft
-    state = request.args.get('state')
-    
-    # JavaScript-Code zum Abrufen des gespeicherten State-Werts aus localStorage
-    script = """
-    <script>
-        var storedState = localStorage.getItem('oauth_state');
-        if (storedState === '{state}') {
-            // State-Wert stimmt überein, jetzt den Token abrufen
-            window.location.href = '/exchange_token?code=' + window.location.search.split('code=')[1];
-        } else {
-            document.write('State mismatch. Potential CSRF attack.');
-        }
-    </script>
-    """.format(state=state)
-    
-    return script
-
-@app.route('/exchange_token')
-def exchange_token():
-    code = request.args.get('code')
+@app.route('/auth_callback')
+def auth_callback():
+    token = None
     try:
-        token = oauth.azure.authorize_access_token()
-        session['token'] = token  # Speichere das Token in der Session
-        user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
-        session['user'] = user  # Speichere die Benutzerdaten in der Session
-        return redirect(url_for('index'))
+        token = oauth.azure.authorize_access_token()  # Token abrufen
+        session['token'] = token  # Token in der Session speichern
+        user = oauth.azure.get('me').json()  # Benutzerdaten abrufen
+        session['user'] = user
     except Exception as e:
-        return jsonify({'error': 'Failed to retrieve access token.'}), 500
+        return f"""
+        <script>
+            microsoftTeams.authentication.notifyFailure("Error retrieving token: {str(e)}");
+        </script>
+        """
+
+    # Erfolgreich, Benutzer zur Microsoft Teams App weiterleiten
+    return """
+    <script>
+        microsoftTeams.authentication.notifySuccess("Login successful");
+    </script>
+    """
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_files():

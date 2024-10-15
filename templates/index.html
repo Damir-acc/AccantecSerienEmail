@@ -1,3 +1,5 @@
+<script src="https://statics.teams.cdn.office.net/sdk/v1.10.0/js/MicrosoftTeams.min.js"></script>
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -149,8 +151,8 @@
 <body>
     <div class="container">
         <h1>Accantec Serien E-Mails</h1>
-        <form id="loginForm" method="get" action="/login">
-            <button type="submit">Login</button>
+        <form id="loginForm">
+            <button type="button" id="loginButton">Login</button>
         </form>
 
         <form id="emailForm" method="post" enctype="multipart/form-data" style="display:none;">
@@ -194,25 +196,38 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script>
-        // Bei Seitenladeereignis das Formular und den Fortschritt zurücksetzen
-        window.onload = function() {
-            $('#emailForm').show(); // Verstecke das E-Mail-Formular
-            $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%'); // Setzt den Fortschritt zurück
-            $('#statusMessages').empty(); // Setzt die Statusmeldungen zurück
-            $('#overallStatus').text(''); // Setzt den Gesamtstatus zurück
-        }
+        microsoftTeams.initialize();
 
-        // Statusmeldungen abrufen
+        $('#loginButton').click(function() {
+            microsoftTeams.authentication.authenticate({
+                url: window.location.origin + "/auth_popup",
+                width: 600,
+                height: 535,
+                successCallback: function (result) {
+                    $('#loginForm').hide();  // Login-Formular verstecken
+                    $('#emailForm').show();  // E-Mail-Formular anzeigen
+                },
+                failureCallback: function (error) {
+                    console.error("Login failed: ", error);
+                    alert("Login failed: " + error);
+                }
+            });
+        });
+
+        // Statusmeldungen und Fortschritt regelmäßig aktualisieren
+        setInterval(fetchStatusMessages, 500);
+        setInterval(fetchProgress, 500);
+
+        // Statusmeldungen und Fortschritt-Funktionen (gleich wie in deinem Code)
         function fetchStatusMessages() {
             $.get('/api/status', function(data) {
-                $('#statusMessages').empty();  // Lösche alte Statusmeldungen
+                $('#statusMessages').empty();
                 data.forEach(function(message) {
                     $('#statusMessages').append(`<li class="list-group-item">${message}</li>`);
                 });
             });
         }
 
-        // Fortschritt abrufen
         function fetchProgress() {
             $.get('/api/progress', function(data) {
                 var progress = data.progress;
@@ -220,40 +235,31 @@
             });
         }
 
-        // Abschlussprüfung
         function checkCompletion() {
             $.get('/api/complete', function(data) {
                 if (data.completed) {
                     alert('E-Mail-Versand abgeschlossen.');
-                    $('#overallStatus').text('E-Mail-Versand abgeschlossen.'); // Gesamtstatus aktualisieren
+                    $('#overallStatus').text('E-Mail-Versand abgeschlossen.');
                     $('#submitButton').show();
                     $('#abortButton').hide();
-                    $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
-                    $('#statusMessages').empty(); // Statusmeldungen löschen
                 } else {
-                    setTimeout(checkCompletion, 1000);  // Wenn nicht abgeschlossen, wiederhole die Überprüfung
+                    setTimeout(checkCompletion, 1000);
                 }
             });
         }
 
-        // Statusmeldungen und Fortschritt alle paar Sekunden aktualisieren
-        setInterval(fetchStatusMessages, 500);
-        setInterval(fetchProgress, 500);
-
-        // Button-Logik: Umschalten zwischen "Senden" und "Abbrechen"
         $(document).ready(function() {
             let isSending = false;
             const submitButton = $('#submitButton');
             const abortButton = $('#abortButton');
 
-            // E-Mail-Formular einreichen
             $('#emailForm').on('submit', function(e) {
-                e.preventDefault(); // Verhindert die Standardübermittlung
-                submitButton.hide(); // Versteckt den Senden-Button
-                abortButton.show(); // Zeigt den Abbrechen-Button an
-                isSending = true; // Setzt den Status auf "sendet"
+                e.preventDefault();
+                submitButton.hide();
+                abortButton.show();
+                isSending = true;
 
-                const formData = new FormData(this); // Formulardaten erfassen
+                const formData = new FormData(this);
 
                 $.ajax({
                     url: '/upload',
@@ -262,45 +268,33 @@
                     processData: false,
                     contentType: false,
                     success: function(response) {
-                        // Starte die Überprüfung des Abschlusses
                         checkCompletion();
                     },
                     error: function(xhr) {
-                        // Überprüfen, ob eine Fehlermeldung im JSON-Response vorhanden ist
                         let errorMessage = 'Fehler beim Hochladen der Dateien.';
                         if (xhr.responseJSON && xhr.responseJSON.error) {
-                           errorMessage = xhr.responseJSON.error;
+                            errorMessage = xhr.responseJSON.error;
                         }
-
-                        // Zeige die Fehlermeldung in den Statusmeldungen an
-                        $('#statusMessages').empty();  // Lösche alte Statusmeldungen
+                        $('#statusMessages').empty();
                         $('#statusMessages').append(`<li class="list-group-item">${errorMessage}</li>`);
-
-                        alert(errorMessage); // Zeige den Fehler als Popup
+                        alert(errorMessage);
+                        submitButton.show();
+                        abortButton.hide();
                         isSending = false;
-                        submitButton.show(); // Zeigt den Senden-Button wieder an
-                        abortButton.hide(); // Versteckt den Abbrechen-Button
                     }
                 });
             });
 
-            // Abbruch-Button-Klick-Ereignis
             abortButton.on('click', function() {
                 if (isSending) {
                     $.post('/api/abort', function(data) {
                         alert(data.message);
-                        $('#overallStatus').text('E-Mail-Versand abgebrochen.'); // Gesamtstatus aktualisieren
-                        abortButton.hide(); // Versteckt den Abbrechen-Button
-                        submitButton.show(); // Zeigt den Senden-Button wieder an
-                        isSending = false; // Setzt den Status zurück
+                        $('#overallStatus').text('E-Mail-Versand abgebrochen.');
+                        abortButton.hide();
+                        submitButton.show();
+                        isSending = false;
                     });
                 }
-            });
-
-            // Benutzeranmeldung und Formularanzeige
-            $('#loginForm').on('submit', function(e) {
-                $('#loginForm').hide(); // Versteckt das Login-Formular
-                $('#emailForm').show(); // Zeigt das E-Mail-Formular an
             });
         });
     </script>
