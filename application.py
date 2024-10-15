@@ -253,10 +253,16 @@ def test_session():
 @app.route('/login')
 def login():
     # Hier wird keine Weiterleitung zu OAuth2 durchgeführt, sondern das Teams SDK verwendet
+    global status_messages, lock
+    with lock:
+       status_messages.append("In LOGIN")
     return render_template('login.html')
 
 @app.route('/auth_popup')
 def auth_popup():
+    global status_messages, lock
+    with lock:
+       status_messages.append("In Auth PopUp")
     # OAuth-Flow starten
     redirect_uri = url_for('auth_callback', _external=True, _scheme='https')
     authorization_url, state = oauth.azure.authorize_redirect(redirect_uri)
@@ -274,6 +280,9 @@ def auth_popup():
 
 @app.route('/auth_callback')
 def auth_callback():
+    global status_messages, lock
+    with lock:
+       status_messages.append("In Auth CallBack")
     token = None
     try:
         token = oauth.azure.authorize_access_token()  # Token abrufen
