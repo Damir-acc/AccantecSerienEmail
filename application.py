@@ -301,8 +301,10 @@ def auth():
             status_messages.append(f"Fehler beim Abrufen des Zugriffstokens: {str(e)}")
         return jsonify({'error': 'Failed to retrieve access token.'}), 500
 
-    user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
-    session['user'] = user  # Speichern der Benutzerdaten in der Sitzung
+    #user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
+    #session['user'] = user  # Speichern der Benutzerdaten in der Sitzung
+    user="d.rassloff@accantec.com"
+    session['user'] = user
     with lock: 
         status_messages.append(f"Benutzer {user}")
     return redirect(url_for('index'))
