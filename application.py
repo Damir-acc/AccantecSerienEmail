@@ -269,22 +269,27 @@ def auth_popup():
     # Generiere einen zufälligen state-Wert
     state = secrets.token_urlsafe(16)
     session['oauth_state'] = state  # Speichere den state in der Sitzung
+    session.modified = True  # Markiere die Sitzung als geändert
     with lock:
        status_messages.append(f"Redirect URL: {redirect_uri}")
-    authorization_url, state = oauth.azure.authorize_redirect(redirect_uri, state=state)
-    with lock:
-       status_messages.append(f"After authorization redirect")
+    try:
+        authorization_url, state = oauth.azure.authorize_redirect(redirect_uri, state=state)
+        with lock:
+            status_messages.append(f"Authorization URL: {authorization_url}")
+        # Der Microsoft Teams SDK erwartet eine JavaScript-basierte Weiterleitung.
+        return f"""
+        <script>
+            // Den State-Wert, wenn nötig, im localStorage speichern
+            localStorage.setItem('oauth_state', '{state}');
 
-    # Der Microsoft Teams SDK erwartet eine JavaScript-basierte Weiterleitung.
-    return f"""
-    <script>
-        // Den State-Wert, wenn nötig, im localStorage speichern
-        localStorage.setItem('oauth_state', '{state}');
-
-        // Weiterleiten zur OAuth2-Seite
-        window.location.href = '{authorization_url}';
-    </script>
-    """
+            // Weiterleiten zur OAuth2-Seite
+            window.location.href = '{authorization_url}';
+        </script>
+        """
+    except Exception as e:
+        with lock:
+            status_messages.append(f"Error during authorization redirect: {str(e)}")
+        return jsonify({"error": "Failed to create authorization URL."}), 500
 
 @app.route('/auth')
 def auth():
