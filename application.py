@@ -24,8 +24,12 @@ emails_completed = False  # Neue Variable, um den Abschluss zu verfolgen
 lock = threading.Lock()  # Lock, um Threads zu synchronisieren
 
 app = Flask(__name__)
-app.config['PREFERRED_URL_SCHEME'] = 'https'
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
+# Sicherstellen, dass die Cookies für HTTPS korrekt gesetzt werden
+app.config['SESSION_COOKIE_SECURE'] = True  # Nur über HTTPS senden
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Schutz vor JavaScript-Zugriff
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Schutz vor CSRF-Angriffen, kann auch 'Strict' sein
+app.config['SESSION_PERMANENT'] = False  # Nicht-permanente Sitzung verwenden, um sicherzustellen, dass Cookies schnell aktualisiert werden
 csrf = CSRFProtect(app)
 
 # OAuth Konfiguration
