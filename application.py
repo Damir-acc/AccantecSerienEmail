@@ -29,7 +29,7 @@ app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
 # Sicherstellen, dass die Cookies für HTTPS korrekt gesetzt werden
 app.config['SESSION_COOKIE_SECURE'] = True  # Nur über HTTPS senden
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Schutz vor JavaScript-Zugriff
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Schutz vor CSRF-Angriffen, kann auch 'Strict' sein
+app.config['SESSION_COOKIE_SAMESITE'] = None  # Schutz vor CSRF-Angriffen, kann auch 'Strict' sein
 app.config['SESSION_PERMANENT'] = False  # Nicht-permanente Sitzung verwenden, um sicherzustellen, dass Cookies schnell aktualisiert werden
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 csrf = CSRFProtect(app)
@@ -252,62 +252,49 @@ def test_session():
 
 @app.route('/login')
 def login():
-    global status_messages, lock
-    status_messages.append(f"in LOGIN before redirect URL")
-    redirect_uri = url_for('auth', _external=True, _scheme='https')
-    status_messages.append(f"in LOGIN after redirect URL")
-
-    # Generiere einen neuen State-Wert
+    # Generiere den State-Wert
     state = secrets.token_urlsafe(16)
-    session['oauth_state'] = state  # Speichere den State in der Sitzung
-    session.modified = True  # Markiere die Sitzung als geändert
-    status_messages.append(f"State bei der Umleitung: {state}")
-
-    with lock: 
-        status_messages.append(f"State gespeichert: {state}")
     
-    status_messages.append(f"oauth_state in Session bei Login: {session.get('oauth_state')}")
-    
-    return oauth.azure.authorize_redirect(redirect_uri, state=state)  # State-Wert übergeben
+    # Speichere den State im localStorage (dies wird über den Client-Browser gemacht)
+    script = f"""
+    <script>
+        localStorage.setItem('oauth_state', '{state}');
+        window.location.href = '{url_for('auth', _external=True, _scheme='https')}';
+    </script>
+    """
+    return script
 
 @app.route('/auth')
 def auth():
-    global status_messages, lock
-    with lock: 
-        status_messages.append(f"in AUTH")
-    
-    # Überprüfen des State-Werts
+    # Abrufen des übergebenen State-Werts von Microsoft
     state = request.args.get('state')
-    status_messages.append(f"State nach Rückleitung: {state}")
-    status_messages.append(f"oauth_state in Session nach Rückleitung: {session.get('oauth_state')}")
-    if state != session.get('oauth_state'):
-        with lock:
-            status_messages.append("State-Wert stimmt nicht überein. Möglicher CSRF-Angriff.")
-        return jsonify({'error': 'State mismatch. Potential CSRF attack.'}), 403  # CSRF-Schutz
     
-    # Den Autorisierungscode abrufen
-    code = request.args.get('code')
-    status_messages.append(f"Code provided: {code}")
+    # JavaScript-Code zum Abrufen des gespeicherten State-Werts aus localStorage
+    script = """
+    <script>
+        var storedState = localStorage.getItem('oauth_state');
+        if (storedState === '{state}') {
+            // State-Wert stimmt überein, jetzt den Token abrufen
+            window.location.href = '/exchange_token?code=' + window.location.search.split('code=')[1];
+        } else {
+            document.write('State mismatch. Potential CSRF attack.');
+        }
+    </script>
+    """.format(state=state)
+    
+    return script
 
-    # Token abrufen
+@app.route('/exchange_token')
+def exchange_token():
+    code = request.args.get('code')
     try:
         token = oauth.azure.authorize_access_token()
-        with lock:
-            status_messages.append("Zugriffstoken erfolgreich abgerufen.")
-        # Entferne den oauth_state aus der Sitzung
-        session.pop('oauth_state', None)
+        session['token'] = token  # Speichere das Token in der Session
+        user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
+        session['user'] = user  # Speichere die Benutzerdaten in der Session
+        return redirect(url_for('index'))
     except Exception as e:
-        with lock:
-            status_messages.append(f"Fehler beim Abrufen des Zugriffstokens: {str(e)}")
         return jsonify({'error': 'Failed to retrieve access token.'}), 500
-
-    #user = oauth.azure.get('me').json()  # Benutzerinformationen abrufen
-    #session['user'] = user  # Speichern der Benutzerdaten in der Sitzung
-    user="d.rassloff@accantec.com"
-    session['user'] = user
-    with lock: 
-        status_messages.append(f"Benutzer {user}")
-    return redirect(url_for('index'))
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_files():
