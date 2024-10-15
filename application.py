@@ -15,6 +15,7 @@ import threading  # Für den Thread-Safe-Mechanismus
 import time
 import secrets  # Für die Generierung des State-Wertes
 from flask_wtf.csrf import CSRFProtect
+import requests
 
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
@@ -306,41 +307,69 @@ def auth_popup():
 def auth():
     global status_messages, lock
     with lock:
-       status_messages.append("In Auth")
+        status_messages.append("In Auth")
+    
     token = None
 
     # Überprüfe den state-Parameter aus der Sitzung
     state = session.get('oauth_state')
     with lock:
-       status_messages.append(f"State: {state}")
+        status_messages.append(f"State: {state}")
+    
     # Hole den state-Parameter aus der Anfrage
     request_state = request.args.get('state')
     with lock:
-       status_messages.append(f"Request-State: {request_state}")
+        status_messages.append(f"Request-State: {request_state}")
     
     # Vergleiche die beiden state-Werte
     if state != request_state:
         return jsonify({"error": "State mismatch. Potential CSRF attack."}), 400
     
+    # Hole den Autorisierungscode
+    authorization_code = request.args.get('code')
+    if not authorization_code:
+        return jsonify({"error": "Authorization code is missing."}), 400
+
+    # Token URL und die Daten für den POST-Request definieren
+    token_url = "https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/token"
+    data = {
+        'grant_type': 'authorization_code',
+        'code': authorization_code,
+        'redirect_uri': 'https://accantecserienemail.azurewebsites.net/auth',
+        'client_id': 'ba945a46-b88a-4115-81df-fa5ab4028feb',
+        'client_secret': 'TAg8Q~qE2XzMm~mprArqxOt74ai0_32TVEbTicYd'
+    }
+
+    # Führe den POST-Request aus, um den Token abzurufen
     try:
-        token = oauth.azure.authorize_access_token()  # Token abrufen
-        with lock:
-           status_messages.append(f"Token: {token}")
-        session['token'] = token  # Token in der Session speichern
-        user = oauth.azure.get('me').json()  # Benutzerdaten abrufen
-        with lock:
-           status_messages.append(f"User: {user}")
-        session['user'] = user
+        response = requests.post(token_url, data=data)
+        if response.ok:
+            token = response.json()
+            with lock:
+                status_messages.append(f"Token: {token}")
+            session['token'] = token  # Token in der Session speichern
+
+            # Benutzerdaten abrufen
+            user = oauth.azure.get('me').json()
+            with lock:
+                status_messages.append(f"User: {user}")
+            session['user'] = user
+            
+        else:
+            with lock:
+                status_messages.append(f"Error response: {response.text}")
+            return f"Error retrieving token: {response.text}", 400
+            
     except Exception as e:
         with lock:
-           status_messages.append(f"Error retrieving token: {str(e)}")
-           status_messages.append(f"Error retrieving token!!!!")
+            status_messages.append(f"Error retrieving token: {str(e)}")
+            status_messages.append("Error retrieving token!!!!")
         return f"""
         <script>
             microsoftTeams.authentication.notifyFailure("Error retrieving token: {str(e)}");
         </script>
         """
-
+    
     # Erfolgreich, Benutzer zur Microsoft Teams App weiterleiten
     return """
     <script>
