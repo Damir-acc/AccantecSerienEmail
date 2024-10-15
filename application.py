@@ -266,6 +266,8 @@ def auth_popup():
        status_messages.append("In Auth PopUp")
     # OAuth-Flow starten
     redirect_uri = url_for('auth', _external=True, _scheme='https')
+    authorize_url='https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/authorize'
+    client_id='ba945a46-b88a-4115-81df-fa5ab4028feb'
     # Generiere einen zufälligen state-Wert
     state = secrets.token_urlsafe(16)
     session['oauth_state'] = state  # Speichere den state in der Sitzung
@@ -274,7 +276,10 @@ def auth_popup():
        status_messages.append(f"Redirect URL: {redirect_uri}")
     try:
         # Authorization URL generieren
-        authorization_url = oauth.azure.authorize_url(redirect_uri, state=state)
+        #if not callable(oauth.azure.authorize_url):
+        #    return jsonify({"error": "authorize_url ist kein callable."}), 500
+        authorization_url = f"{authorize_url}?client_id={client_id}&response_type=code&redirect_uri={redirect_uri}&state={state}&scope=User.Read"
+        #authorization_url = oauth.azure.authorize_url(redirect_uri, state=state)
         with lock:
             status_messages.append(f"Authorization URL: {authorization_url}")
         # Der Microsoft Teams SDK erwartet eine JavaScript-basierte Weiterleitung.
