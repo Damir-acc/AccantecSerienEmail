@@ -242,15 +242,10 @@ def login():
     status_messages.append(f"in LOGIN after redirect URL")
 
 
-    status_messages.append(f"in LOGIN")
-    time.sleep(20)
-    state = oauth.azure.state
-    if not state:
-        state = "unique_state_value"  # Erstellen Sie einen eindeutigen Zustand
-        session['oauth_state'] = state
+    # Generiere einen neuen State-Wert
+    state = secrets.token_urlsafe(16)
+    session['oauth_state'] = state  # Speichere den State in der Sitzung
 
-    # Speichern Sie den State-Wert in der Sitzung
-    session['oauth_state'] = state
     with lock: 
         status_messages.append(f"State gespeichert: {state}")
     
