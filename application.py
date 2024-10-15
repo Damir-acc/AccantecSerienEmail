@@ -245,6 +245,7 @@ def login():
     # Generiere einen neuen State-Wert
     state = secrets.token_urlsafe(16)
     session['oauth_state'] = state  # Speichere den State in der Sitzung
+    status_messages.append(f"State bei der Umleitung: {state}")
 
     with lock: 
         status_messages.append(f"State gespeichert: {state}")
@@ -259,6 +260,7 @@ def auth():
     
     # Überprüfen des State-Werts
     state = request.args.get('state')
+    status_messages.append(f"State nach Rückleitung: {state}")
     if state != session.get('oauth_state'):
         with lock:
             status_messages.append("State-Wert stimmt nicht überein. Möglicher CSRF-Angriff.")
