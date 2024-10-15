@@ -264,8 +264,12 @@ def auth_popup():
     with lock:
        status_messages.append("In Auth PopUp")
     # OAuth-Flow starten
-    redirect_uri = url_for('auth_callback', _external=True, _scheme='https')
+    redirect_uri = url_for('auth', _external=True, _scheme='https')
+    with lock:
+       status_messages.append(f"Redirect URL: {redirect_uri}")
     authorization_url, state = oauth.azure.authorize_redirect(redirect_uri)
+    with lock:
+       status_messages.append(f"After authorization redirect")
 
     # Der Microsoft Teams SDK erwartet eine JavaScript-basierte Weiterleitung.
     return f"""
@@ -278,11 +282,11 @@ def auth_popup():
     </script>
     """
 
-@app.route('/auth_callback')
-def auth_callback():
+@app.route('/auth')
+def auth():
     global status_messages, lock
     with lock:
-       status_messages.append("In Auth CallBack")
+       status_messages.append("In Auth")
     token = None
     try:
         token = oauth.azure.authorize_access_token()  # Token abrufen
