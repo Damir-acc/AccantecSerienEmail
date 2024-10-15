@@ -263,10 +263,10 @@ def auth():
     # Überprüfen des State-Werts
     state = request.args.get('state')
     status_messages.append(f"State nach Rückleitung: {state}")
-    if state != session.get('oauth_state'):
-        with lock:
-            status_messages.append("State-Wert stimmt nicht überein. Möglicher CSRF-Angriff.")
-        return jsonify({'error': 'State mismatch. Potential CSRF attack.'}), 403  # CSRF-Schutz
+    #if state != session.get('oauth_state'):
+    #    with lock:
+    #        status_messages.append("State-Wert stimmt nicht überein. Möglicher CSRF-Angriff.")
+    #    return jsonify({'error': 'State mismatch. Potential CSRF attack.'}), 403  # CSRF-Schutz
     
     # Den Autorisierungscode abrufen
     code = request.args.get('code')
