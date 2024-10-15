@@ -327,6 +327,8 @@ def auth():
            status_messages.append(f"User: {user}")
         session['user'] = user
     except Exception as e:
+        with lock:
+           status_messages.append(f"Error retrieving token!!!!")
         return f"""
         <script>
             microsoftTeams.authentication.notifyFailure("Error retrieving token: {str(e)}");
