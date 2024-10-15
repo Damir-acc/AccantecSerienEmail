@@ -196,7 +196,7 @@
     <script>
         // Bei Seitenladeereignis das Formular und den Fortschritt zurücksetzen
         window.onload = function() {
-            //$('#emailForm').hide(); // Verstecke das E-Mail-Formular
+            $('#emailForm').show(); // Verstecke das E-Mail-Formular
             $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%'); // Setzt den Fortschritt zurück
             $('#statusMessages').empty(); // Setzt die Statusmeldungen zurück
             $('#overallStatus').text(''); // Setzt den Gesamtstatus zurück
