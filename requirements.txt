@@ -1,5 +1,6 @@
 numpy==1.26.4                     # Für numerische Berechnungen
 Flask==2.1.2                      # Web-Framework für die App
+flask_wtf==1.2.1
 pandas==1.5.3                     # Verarbeitung von Excel-Dateien
 python-docx==1.1.1                # Verarbeitung von Word-Dokumenten
 openpyxl==3.0.9                   # Lesen/Schreiben von Excel-Dateien

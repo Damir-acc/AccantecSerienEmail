@@ -13,6 +13,8 @@ from authlib.integrations.flask_client import OAuth
 import threading  # Für den Thread-Safe-Mechanismus
 import time
 import secrets  # Für die Generierung des State-Wertes
+from flask_wtf.csrf import CSRFProtect
+
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
@@ -24,6 +26,7 @@ lock = threading.Lock()  # Lock, um Threads zu synchronisieren
 app = Flask(__name__)
 app.config['PREFERRED_URL_SCHEME'] = 'https'
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
+csrf = CSRFProtect(app)
 
 # OAuth Konfiguration
 oauth = OAuth(app)
@@ -263,10 +266,10 @@ def auth():
     # Überprüfen des State-Werts
     state = request.args.get('state')
     status_messages.append(f"State nach Rückleitung: {state}")
-    #if state != session.get('oauth_state'):
-    #    with lock:
-    #        status_messages.append("State-Wert stimmt nicht überein. Möglicher CSRF-Angriff.")
-    #    return jsonify({'error': 'State mismatch. Potential CSRF attack.'}), 403  # CSRF-Schutz
+    if state != session.get('oauth_state'):
+        with lock:
+            status_messages.append("State-Wert stimmt nicht überein. Möglicher CSRF-Angriff.")
+        return jsonify({'error': 'State mismatch. Potential CSRF attack.'}), 403  # CSRF-Schutz
     
     # Den Autorisierungscode abrufen
     code = request.args.get('code')
