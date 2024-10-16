@@ -382,6 +382,7 @@ def auth():
         """
     
     # Erfolgreich, Benutzer zur Microsoft Teams App weiterleiten
+    status_messages.append(f"Success should go back to Microsof Teams App again")
     return """
     <script>
         microsoftTeams.authentication.notifySuccess("Login successful");
