@@ -245,7 +245,7 @@
 
         function fetchStatusMessages() {
             $.get('/api/status', function(data) {
-                $('#statusMessages').empty();
+                //$('#statusMessages').empty();
                 data.forEach(function(message) {
                     $('#statusMessages').append(`<li class="list-group-item">${message}</li>`);
                 });
