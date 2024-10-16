@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>  <!-- jQuery hinzufügen -->
     <script src="https://statics.teams.cdn.office.net/sdk/v1.10.0/js/MicrosoftTeams.min.js"></script>
     <script>
         microsoftTeams.initialize();
@@ -16,11 +17,13 @@
             statusDiv.appendChild(messageElement);
         }
 
-        setInterval(fetchStatusMessages, 500);
+        $(document).ready(function() {
+            setInterval(fetchStatusMessages, 500);
+        });
 
         let previousMessages = [];  // Speichern der vorherigen Statusmeldungen
         function fetchStatusMessages() {
-            $.get('/api/status_login', function(data) {
+            $.get('/api/status', function(data) {
                 data.forEach(function(message) {
                     if (!previousMessages.includes(message)) {
                         // Neue Nachricht zur Liste hinzufügen, wenn sie noch nicht existiert

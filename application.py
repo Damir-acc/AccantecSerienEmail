@@ -21,7 +21,6 @@ import requests
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
 status_messages = []
-status_messages_login = []
 abort_flag = False
 emails_completed = False  # Neue Variable, um den Abschluss zu verfolgen
 lock = threading.Lock()  # Lock, um Threads zu synchronisieren
@@ -309,7 +308,6 @@ def auth():
     global status_messages, lock
     with lock:
         status_messages.append("In Auth")
-        status_messages_login.append("In Auth")
     
     token = None
 
@@ -480,11 +478,6 @@ def abort():
 def get_status():
     with lock:  # Thread-Safe Status auslesen
         return jsonify(status_messages), 200
-
-@app.route('/api/status_login', methods=['GET'])
-def get_status():
-    with lock:  # Thread-Safe Status auslesen
-        return jsonify(status_messages_login), 200
 
 @app.route('/api/progress', methods=['GET'])
 def get_progress():
