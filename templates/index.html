@@ -198,30 +198,51 @@
     <script>
         microsoftTeams.initialize();
 
-$('#loginButton').click(function() {
-    console.error("Login Click Button");
-    microsoftTeams.authentication.authenticate({
-        url: window.location.origin + "/auth_popup",
-        width: 600,
-        height: 535,
-        successCallback: function (result) {
-            console.error("SuccessCallback");
-            localStorage.setItem('authToken', result);  // Token speichern
-            $('#loginForm').hide();  // Login-Formular verstecken
-            $('#emailForm').show();  // E-Mail-Formular anzeigen
-        },
-        failureCallback: function (error) {
-            console.error("Login failed: ", error);
-            alert("Login failed: " + error);
+        // Funktion zur Statusmeldung auf der Seite
+        function addStatusMessage(message) {
+            $('#statusMessages').append(`<li class="list-group-item">${message}</li>`);
         }
-    });
-});
+
+        $('#loginButton').click(function() {
+            addStatusMessage("Login wird gestartet...");
+            microsoftTeams.authentication.authenticate({
+                url: window.location.origin + "/auth_popup",
+                width: 600,
+                height: 535,
+                successCallback: function (result) {
+                    addStatusMessage("Login erfolgreich. Token erhalten.");
+                    localStorage.setItem('authToken', result);  // Token speichern
+                    $('#loginForm').hide();  // Login-Formular verstecken
+                    $('#emailForm').show();  // E-Mail-Formular anzeigen
+                    window.focus();  // Popup schließen und Parent-Fenster fokussieren
+                },
+                failureCallback: function (error) {
+                    addStatusMessage("Login fehlgeschlagen: " + error);
+                }
+            });
+        });
+
+        // Überprüfen, ob der Benutzer eingeloggt ist
+        $(document).ready(function() {
+            addStatusMessage("Seite wird geladen...");
+
+            const authToken = localStorage.getItem('authToken');
+
+            if (authToken) {
+                addStatusMessage("Benutzer bereits eingeloggt. Token gefunden.");
+                $('#loginForm').hide();
+                $('#emailForm').show();
+            } else {
+                addStatusMessage("Kein Token gefunden. Login erforderlich.");
+                $('#loginForm').show();
+                $('#emailForm').hide();
+            }
+        });
 
         // Statusmeldungen und Fortschritt regelmäßig aktualisieren
         setInterval(fetchStatusMessages, 500);
         setInterval(fetchProgress, 500);
 
-        // Statusmeldungen und Fortschritt-Funktionen (gleich wie in deinem Code)
         function fetchStatusMessages() {
             $.get('/api/status', function(data) {
                 $('#statusMessages').empty();
@@ -255,17 +276,6 @@ $('#loginButton').click(function() {
             let isSending = false;
             const submitButton = $('#submitButton');
             const abortButton = $('#abortButton');
-
-            // Überprüfen, ob der Benutzer bereits eingeloggt ist
-            const authToken = localStorage.getItem('authToken');
-            console.error("Auth Token: ", authToken);
-            if (authToken) {
-               $('#loginForm').hide();
-               $('#emailForm').show();
-            } else {
-               $('#loginForm').show();
-               $('#emailForm').hide();
-            }
 
             $('#emailForm').on('submit', function(e) {
                 e.preventDefault();
