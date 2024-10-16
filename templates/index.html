@@ -200,16 +200,17 @@
         }
 
         $(document).ready(function() {
-            addStatusMessage("Seite wird geladen...");
-
+            // Überprüfe, ob ein Token vorhanden ist
             const authToken = localStorage.getItem('authToken');
 
             if (!authToken) {
-                // Wenn kein Token vorhanden ist, zur Login-Seite umleiten
-                window.location.href = "/login"; // Stelle sicher, dass dies mit deiner Routing-Logik übereinstimmt
+                addStatusMessage("Bitte einloggen, um fortzufahren.");
+                // Benutzer zur Login-Seite umleiten, wenn kein Token vorhanden ist
+                $('#emailForm').hide(); // Verstecke das Formular
+                window.location.href = "/login"; // Umleitung zur Login-Seite
             } else {
                 addStatusMessage("Benutzer bereits eingeloggt. Token gefunden.");
-                $('#emailForm').show();
+                $('#emailForm').show(); // Zeige das Formular
             }
         });
 
