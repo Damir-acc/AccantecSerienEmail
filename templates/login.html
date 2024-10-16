@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +16,7 @@
                 height: 535,
                 successCallback: function (result) {
                     console.log("Login erfolgreich: ", result);
+                    localStorage.setItem('authToken', result);  // Token speichern
                     window.location.href = "/";  // Bei Erfolg zur Startseite weiterleiten
                 },
                 failureCallback: function (error) {

@@ -1,5 +1,3 @@
-<script src="https://statics.teams.cdn.office.net/sdk/v1.10.0/js/MicrosoftTeams.min.js"></script>
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -151,11 +149,8 @@
 <body>
     <div class="container">
         <h1>Accantec Serien E-Mails</h1>
-        <form id="loginForm">
-            <button type="button" id="loginButton">Login</button>
-        </form>
 
-        <form id="emailForm" method="post" enctype="multipart/form-data" style="display:none;">
+        <form id="emailForm" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="word_file">Word-Datei:</label>
                 <input type="file" name="word_file" required>
@@ -195,6 +190,7 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://statics.teams.cdn.office.net/sdk/v1.10.0/js/MicrosoftTeams.min.js"></script>
     <script>
         microsoftTeams.initialize();
 
@@ -203,39 +199,17 @@
             $('#statusMessages').append(`<li class="list-group-item">${message}</li>`);
         }
 
-        $('#loginButton').click(function() {
-            addStatusMessage("Login wird gestartet...");
-            microsoftTeams.authentication.authenticate({
-                url: window.location.origin + "/auth_popup",
-                width: 600,
-                height: 535,
-                successCallback: function (result) {
-                    addStatusMessage("Login erfolgreich. Token erhalten.");
-                    localStorage.setItem('authToken', result);  // Token speichern
-                    $('#loginForm').hide();  // Login-Formular verstecken
-                    $('#emailForm').show();  // E-Mail-Formular anzeigen
-                    window.focus();  // Popup schließen und Parent-Fenster fokussieren
-                },
-                failureCallback: function (error) {
-                    addStatusMessage("Login fehlgeschlagen: " + error);
-                }
-            });
-        });
-
-        // Überprüfen, ob der Benutzer eingeloggt ist
         $(document).ready(function() {
             addStatusMessage("Seite wird geladen...");
 
             const authToken = localStorage.getItem('authToken');
 
-            if (authToken) {
-                addStatusMessage("Benutzer bereits eingeloggt. Token gefunden.");
-                $('#loginForm').hide();
-                $('#emailForm').show();
+            if (!authToken) {
+                // Wenn kein Token vorhanden ist, zur Login-Seite umleiten
+                window.location.href = "/login"; // Stelle sicher, dass dies mit deiner Routing-Logik übereinstimmt
             } else {
-                addStatusMessage("Kein Token gefunden. Login erforderlich.");
-                $('#loginForm').show();
-                $('#emailForm').hide();
+                addStatusMessage("Benutzer bereits eingeloggt. Token gefunden.");
+                $('#emailForm').show();
             }
         });
 
@@ -246,7 +220,6 @@
         let previousMessages = [];  // Speichern der vorherigen Statusmeldungen
         function fetchStatusMessages() {
             $.get('/api/status', function(data) {
-                //$('#statusMessages').empty();
                 data.forEach(function(message) {
                     if (!previousMessages.includes(message)) {
                         // Neue Nachricht zur Liste hinzufügen, wenn sie noch nicht existiert
@@ -319,8 +292,8 @@
                     $.post('/api/abort', function(data) {
                         alert(data.message);
                         $('#overallStatus').text('E-Mail-Versand abgebrochen.');
-                        abortButton.hide();
                         submitButton.show();
+                        abortButton.hide();
                         isSending = false;
                     });
                 }
