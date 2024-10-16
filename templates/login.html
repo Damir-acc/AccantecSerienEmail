@@ -31,5 +31,31 @@
     <h1>Microsoft Teams OAuth2 Login</h1>
     <button onclick="initiateLogin()">Einloggen</button>
     <p>Bitte auf den Button klicken, um sich anzumelden.</p>
+    <div id="statusMessages" class="status-messages"></div>
+
+    <script>
+        // Statusmeldungen anzeigen
+        function displayStatusMessage(message) {
+            const statusDiv = document.getElementById('statusMessages');
+            const messageElement = document.createElement('p');
+            messageElement.textContent = message;
+            statusDiv.appendChild(messageElement);
+        }
+
+        // Zeige Statusmeldungen während des Authentifizierungsprozesses
+        microsoftTeams.authentication.authenticate({
+            url: window.location.origin + "/auth_popup",
+            width: 600,
+            height: 535,
+            successCallback: function (result) {
+                displayStatusMessage("Login erfolgreich!");
+                localStorage.setItem('authToken', result);
+                window.location.href = "/";  // Bei Erfolg zur Startseite weiterleiten
+            },
+            failureCallback: function (error) {
+                displayStatusMessage("Login fehlgeschlagen: " + error);
+            }
+        });
+    </script>
 </body>
 </html>
