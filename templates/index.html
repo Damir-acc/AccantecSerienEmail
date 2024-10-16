@@ -243,11 +243,16 @@
         setInterval(fetchStatusMessages, 500);
         setInterval(fetchProgress, 500);
 
+        let previousMessages = [];  // Speichern der vorherigen Statusmeldungen
         function fetchStatusMessages() {
             $.get('/api/status', function(data) {
                 //$('#statusMessages').empty();
                 data.forEach(function(message) {
-                    $('#statusMessages').append(`<li class="list-group-item">${message}</li>`);
+                    if (!previousMessages.includes(message)) {
+                        // Neue Nachricht zur Liste hinzufügen, wenn sie noch nicht existiert
+                        $('#statusMessages').append(`<li class="list-group-item">${message}</li>`);
+                        previousMessages.push(message);  // Nachricht speichern
+                    }
                 });
             });
         }
