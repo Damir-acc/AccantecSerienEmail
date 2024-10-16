@@ -204,6 +204,7 @@ $('#loginButton').click(function() {
         width: 600,
         height: 535,
         successCallback: function (result) {
+            $('#statusMessages').append('In SuccessCallback');
             localStorage.setItem('authToken', result);  // Token speichern
             $('#loginForm').hide();  // Login-Formular verstecken
             $('#emailForm').show();  // E-Mail-Formular anzeigen
