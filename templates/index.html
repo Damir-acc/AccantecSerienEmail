@@ -198,21 +198,22 @@
     <script>
         microsoftTeams.initialize();
 
-        $('#loginButton').click(function() {
-            microsoftTeams.authentication.authenticate({
-                url: window.location.origin + "/auth_popup",
-                width: 600,
-                height: 535,
-                successCallback: function (result) {
-                    $('#loginForm').hide();  // Login-Formular verstecken
-                    $('#emailForm').show();  // E-Mail-Formular anzeigen
-                },
-                failureCallback: function (error) {
-                    console.error("Login failed: ", error);
-                    alert("Login failed: " + error);
-                }
-            });
-        });
+$('#loginButton').click(function() {
+    microsoftTeams.authentication.authenticate({
+        url: window.location.origin + "/auth_popup",
+        width: 600,
+        height: 535,
+        successCallback: function (result) {
+            localStorage.setItem('authToken', result);  // Token speichern
+            $('#loginForm').hide();  // Login-Formular verstecken
+            $('#emailForm').show();  // E-Mail-Formular anzeigen
+        },
+        failureCallback: function (error) {
+            console.error("Login failed: ", error);
+            alert("Login failed: " + error);
+        }
+    });
+});
 
         // Statusmeldungen und Fortschritt regelmäßig aktualisieren
         setInterval(fetchStatusMessages, 500);
@@ -252,6 +253,16 @@
             let isSending = false;
             const submitButton = $('#submitButton');
             const abortButton = $('#abortButton');
+
+                // Überprüfen, ob der Benutzer bereits eingeloggt ist
+            const authToken = localStorage.getItem('authToken');
+            if (authToken) {
+               $('#loginForm').hide();
+               $('#emailForm').show();
+            } else {
+               $('#loginForm').show();
+               $('#emailForm').hide();
+            }
 
             $('#emailForm').on('submit', function(e) {
                 e.preventDefault();
