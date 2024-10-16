@@ -199,12 +199,13 @@
         microsoftTeams.initialize();
 
 $('#loginButton').click(function() {
+    $('#statusMessages').append(`<li class="list-group-item">"In Login Button function"</li>`);
     microsoftTeams.authentication.authenticate({
         url: window.location.origin + "/auth_popup",
         width: 600,
         height: 535,
         successCallback: function (result) {
-            $('#statusMessages').append('In SuccessCallback');
+            $('#statusMessages').append(`<li class="list-group-item">"In SuccessCallback"</li>`);
             localStorage.setItem('authToken', result);  // Token speichern
             $('#loginForm').hide();  // Login-Formular verstecken
             $('#emailForm').show();  // E-Mail-Formular anzeigen
@@ -255,8 +256,9 @@ $('#loginButton').click(function() {
             const submitButton = $('#submitButton');
             const abortButton = $('#abortButton');
 
-                // Überprüfen, ob der Benutzer bereits eingeloggt ist
+            // Überprüfen, ob der Benutzer bereits eingeloggt ist
             const authToken = localStorage.getItem('authToken');
+            $('#statusMessages').append(`<li class="list-group-item">${authToken}</li>`);
             if (authToken) {
                $('#loginForm').hide();
                $('#emailForm').show();
