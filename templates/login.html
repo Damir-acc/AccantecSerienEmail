@@ -16,6 +16,21 @@
             statusDiv.appendChild(messageElement);
         }
 
+        setInterval(fetchStatusMessages, 500);
+
+        let previousMessages = [];  // Speichern der vorherigen Statusmeldungen
+        function fetchStatusMessages() {
+            $.get('/api/status_login', function(data) {
+                data.forEach(function(message) {
+                    if (!previousMessages.includes(message)) {
+                        // Neue Nachricht zur Liste hinzufügen, wenn sie noch nicht existiert
+                        displayStatusMessage(message);
+                        previousMessages.push(message);  // Nachricht speichern
+                    }
+                });
+            });
+        }
+
         // Starte den Authentifizierungs-Flow
         function initiateLogin() {
             microsoftTeams.authentication.authenticate({
