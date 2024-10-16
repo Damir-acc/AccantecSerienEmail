@@ -212,6 +212,12 @@
                 addStatusMessage("Benutzer bereits eingeloggt. Token gefunden.");
                 $('#emailForm').show(); // Zeige das Formular
             }
+
+            // Überprüfe, ob der Erfolg von Microsoft Teams kam
+            microsoftTeams.authentication.notifySuccess = function(successMessage) {
+                addStatusMessage(successMessage); // Erfolgreiche Anmelde-Nachricht hinzufügen
+                $('#emailForm').show(); // E-Mail-Formular anzeigen
+            };
         });
 
         // Statusmeldungen und Fortschritt regelmäßig aktualisieren
