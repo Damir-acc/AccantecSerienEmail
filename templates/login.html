@@ -25,13 +25,11 @@
                 }
             });
         }
-
-        // Auslösen, sobald die Seite geladen ist
-        window.onload = initiateLogin;
     </script>
 </head>
 <body>
     <h1>Microsoft Teams OAuth2 Login</h1>
-    <p>Bitte warten Sie, während Sie angemeldet werden...</p>
+    <button onclick="initiateLogin()">Einloggen</button>
+    <p>Bitte auf den Button klicken, um sich anzumelden.</p>
 </body>
 </html>
