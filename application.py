@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, copy_current_request_context
 import threading  # Für den Thread-Safe-Mechanismus
 import time
 import identity.web
@@ -175,7 +175,7 @@ def get_user_email(access_token):
     # Use access token to call downstream api
     api_result = requests.get(
         application_config.ENDPOINT,
-        headers={'Authorization': 'Bearer ' + token['access_token']},
+        headers={'Authorization': 'Bearer ' + access_token['access_token']},
         timeout=30,
     ).json()
 
@@ -183,7 +183,7 @@ def get_user_email(access_token):
         user_info = api_result.json()
         return user_info["mail"]  # E-Mail-Adresse des Benutzers
     else:
-        raise Exception(f"Error getting user email: {response.status_code} - {response.text}")
+        raise Exception(f"Error getting user email: {api_result.status_code} - {api_result.text}")
 
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
@@ -359,8 +359,13 @@ def upload_files():
 
         # Sende die E-Mails in einem separaten Thread
         from threading import Thread
-        thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path))
+        @copy_current_request_context
+        def thread_function():
+           send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path)
+           #thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path))
+        thread = Thread(target=thread_function)
         thread.start()
+        #thread.start()
 
         return redirect(url_for('upload_files'))
 
