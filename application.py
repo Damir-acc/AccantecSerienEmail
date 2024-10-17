@@ -189,7 +189,6 @@ def get_user_email(access_token):
         raise Exception(f"Error getting user email: {response.status_code} - {response.text}")
 
 
-# E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
 def send_emails(word_file_path, excel_file_path, signature_path, user_email, access_token, attachments, logo_path):
     global progress_percentage, status_messages, abort_flag, emails_completed
     global lock  # Verwenden des Locks für Thread-Sicherheit
@@ -234,21 +233,40 @@ def send_emails(word_file_path, excel_file_path, signature_path, user_email, acc
             email_body += format_email_body(email_body_template, hyperlinks)
             email_body += "<br><br>" + updated_signature
 
-            msg = MIMEMultipart('related')
-            msg['From'] = user_email
-            msg['To'] = email
-            msg['Subject'] = betreff
-            msg.attach(MIMEText(email_body, 'html', 'UTF-8'))
+            # E-Mail-Nachricht erstellen
+            msg = {
+                "message": {
+                    "subject": betreff,
+                    "body": {
+                        "contentType": "HTML",
+                        "content": email_body
+                    },
+                    "toRecipients": [
+                        {
+                            "emailAddress": {
+                                "address": email
+                            }
+                        }
+                    ],
+                    "attachments": []
+                }
+            }
 
-            # Logo einbetten (ohne als regulären Anhang zu versenden)
+            # Logo einbetten (als inline-Anhang)
             try:
                 with open(logo_path, 'rb') as logo_file:
-                    logo = MIMEImage(logo_file.read())
-                    logo.add_header('Content-ID', f'<{logo_cid}>')
-                    logo.add_header('Content-Disposition', 'inline', filename=os.path.basename(logo_path))
-                    msg.attach(logo)
+                    logo_content = base64.b64encode(logo_file.read()).decode()
+                    logo_attachment = {
+                        "@odata.type": "#microsoft.graph.fileAttachment",
+                        "name": os.path.basename(logo_path),
+                        "contentBytes": logo_content,
+                        "contentId": logo_cid,
+                        "isInline": True
+                    }
+                    msg["message"]["attachments"].append(logo_attachment)
             except Exception as e:
-                print(f'Fehler beim Einbetten des Logos: {e}')
+                with lock:
+                    status_messages.append(f'Fehler beim Einbetten des Logos: {e}')
 
             # Anhänge hinzufügen
             for attachment_filename in attachments:
@@ -256,48 +274,46 @@ def send_emails(word_file_path, excel_file_path, signature_path, user_email, acc
                 if os.path.exists(attachment_path) and attachment_filename != os.path.basename(logo_path):
                     try:
                         with open(attachment_path, 'rb') as attachment_file:
-                            part = MIMEApplication(attachment_file.read(), Name=attachment_filename)
-                            part['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
-                            msg.attach(part)
+                            attachment_content = base64.b64encode(attachment_file.read()).decode()
+                            part = {
+                                "@odata.type": "#microsoft.graph.fileAttachment",
+                                "name": attachment_filename,
+                                "contentBytes": attachment_content
+                            }
+                            msg["message"]["attachments"].append(part)
                     except Exception as e:
-                        print(f'Fehler beim Anhängen der Datei "{attachment_path}": {e}')
+                        with lock:
+                            status_messages.append(f'Fehler beim Anhängen der Datei "{attachment_path}": {e}')
                 else:
-                    print(f'Anhang für {email} konnte nicht hinzugefügt werden. Datei "{attachment_path}" nicht gefunden oder ist das Logo.')
+                    with lock:
+                        status_messages.append(f'Anhang für {email} konnte nicht hinzugefügt werden. Datei "{attachment_path}" nicht gefunden oder ist das Logo.')
 
-            try:
-
-                # E-Mail über Microsoft Graph API senden
-                response = requests.post(
+            # E-Mail über Microsoft Graph API senden
+            response = requests.post(
                 "https://graph.microsoft.com/v1.0/me/sendMail",
                 headers={
                     'Authorization': 'Bearer ' + access_token['access_token'],
                     'Content-Type': 'application/json'
                 },
                 json=msg
-                )
+            )
 
-                # Fortschritt und Statusmeldung aktualisieren (Thread-sicher)
-                with lock:
-                    status_messages.append(f"E-Mail an {email} gesendet.")
-                    status_messages.append(f"E-Mail {index + 1}/{total_emails} gesendet.")
-                    progress_percentage = int(((index + 1) / total_emails) * 100)
+            # Fortschritt aktualisieren
+            with lock:
+                progress_percentage = int((index + 1) / total_emails * 100)
+                if response.status_code == 202:
+                    status_messages.append(f"E-Mail an {email} erfolgreich gesendet.")
+                else:
+                    status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {response.status_code} - {response.text}")
 
-            except Exception as e:
-                with lock:
-                    status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {e}")
-                    abort_flag = True
-
-    except ValueError as ve:
-        with lock:
-            status_messages.append(str(ve))  # Füge die Fehlermeldung zu den Statusmeldungen hinzu
-        return jsonify({'error': str(ve)}), 400
-            #abort_flag = True
-            #emails_completed = True
-
-    # Versand abgeschlossen oder abgebrochen
-    with lock:
+        # Abschlussmeldung
         emails_completed = True
+        with lock:
+            status_messages.append("Alle E-Mails wurden verarbeitet.")
 
+    except Exception as e:
+        with lock:
+            status_messages.append(f"Ein Fehler ist aufgetreten: {str(e)}")
 
 
 @app.route('/', methods=['GET', 'POST'])
