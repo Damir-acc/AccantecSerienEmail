@@ -169,6 +169,21 @@ def validate_file_type(file_path, expected_extensions):
         with lock:
             status_messages.append(error_message)  # Hinzufügen der Fehlermeldung zu den Statusmeldungen
         raise ValueError(error_message)
+    
+def get_user_email(access_token):
+    
+    # Use access token to call downstream api
+    api_result = requests.get(
+        application_config.ENDPOINT,
+        headers={'Authorization': 'Bearer ' + token['access_token']},
+        timeout=30,
+    ).json()
+
+    if api_result.status_code == 200:
+        user_info = api_result.json()
+        return user_info["mail"]  # E-Mail-Adresse des Benutzers
+    else:
+        raise Exception(f"Error getting user email: {response.status_code} - {response.text}")
 
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
@@ -221,6 +236,9 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
             msg['Subject'] = betreff
             msg.attach(MIMEText(email_body, 'html', 'UTF-8'))
 
+            access_token = auth.get_token_for_user(application_config.SCOPE)
+            user_email=get_user_email(access_token)
+
             # Logo einbetten (ohne als regulären Anhang zu versenden)
             try:
                 with open(logo_path, 'rb') as logo_file:
@@ -249,7 +267,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                 # E-Mail über den SMTP-Server senden
                 with smtplib.SMTP(smtp_server, smtp_port) as server:
                     server.starttls()
-                    server.login(username, password)
+                    server.login(user_email, access_token)
                     server.send_message(msg)
 
                 # Fortschritt und Statusmeldung aktualisieren (Thread-sicher)
@@ -341,7 +359,7 @@ def upload_files():
 
         return redirect(url_for('upload_files'))
 
-    return render_template('index.html')
+    return render_template('email_send.html')
 
 @app.route('/api/abort', methods=['POST'])
 def abort():
