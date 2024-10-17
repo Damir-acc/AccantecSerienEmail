@@ -171,19 +171,26 @@ def validate_file_type(file_path, expected_extensions):
         raise ValueError(error_message)
     
 def get_user_email(access_token):
-    
     # Use access token to call downstream api
-    api_result = requests.get(
+    global lock 
+    global status_messages
+    response = requests.get(
         application_config.ENDPOINT,
         headers={'Authorization': 'Bearer ' + access_token['access_token']},
         timeout=30,
-    ).json()
-
-    if api_result.status_code == 200:
-        user_info = api_result.json()
-        return user_info["mail"]  # E-Mail-Adresse des Benutzers
+    )
+    
+    with lock:
+        status_messages.append(f"Response Status Code: {response.status_code}")
+    # Überprüfen des Statuscodes der Antwort
+    if response.status_code == 200:
+        user_info = response.json()
+        if "mail" in user_info:
+            return user_info["mail"]  # E-Mail-Adresse des Benutzers
+        else:
+            raise Exception("E-Mail-Adresse nicht in der Benutzerinformation enthalten.")
     else:
-        raise Exception(f"Error getting user email: {api_result.status_code} - {api_result.text}")
+        raise Exception(f"Error getting user email: {response.status_code} - {response.text}")
 
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
 def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, user_email, access_token, attachments, logo_path):
@@ -356,9 +363,16 @@ def upload_files():
             status_messages.append(f"Token: {access_token}.")
         with lock:
             status_messages.append(f"Before user_email information")
-        user_email=get_user_email(access_token)
-        with lock:
-            status_messages.append(f"User E-Mail: {user_email}.")
+
+
+        try:
+            user_email = get_user_email(access_token)
+            with lock:
+               status_messages.append(f"User E-Mail: {user_email}.")
+        except Exception as e:
+            with lock:
+               status_messages.append(f"Fehler beim Abrufen der Benutzer-E-Mail: {str(e)}")
+        return jsonify({'error': str(e)}), 400
 
         # Sende die E-Mails in einem separaten Thread
         from threading import Thread
