@@ -51,7 +51,7 @@ def login():
     return render_template("login.html", version='1.0', **auth.log_in(
         scopes=application_config.SCOPE, # Have user consent to scopes during log-in
         redirect_uri=url_for("auth_response", _external=True, _scheme="https"), # Optional. If present, this absolute URL must match your app's redirect_uri registered in Microsoft Entra admin center
-        prompt="select_account",  # Optional.
+        #prompt="select_account",  # Optional.
         ))
 
 @app.route("/logout")
