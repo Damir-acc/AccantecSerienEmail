@@ -10,6 +10,10 @@
 
     <ul>
     {% if config.get("ENDPOINT") %}
+        <li><a href='/email_send'>E-Mail Send</a></li>
+    {% endif %}
+
+    {% if config.get("ENDPOINT") %}
       <li><a href='/call_downstream_api'>Call a downstream API</a></li>
     {% endif %}
 
