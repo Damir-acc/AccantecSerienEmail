@@ -44,18 +44,13 @@ def auth_response():
     result = auth.complete_log_in(request.args)
     if "error" in result:
         return render_template("auth_error.html", result=result)
+    return redirect(url_for("index"))
 
-    # Schließe das Popup und signalisiere an Teams, dass die Authentifizierung abgeschlossen ist
-    return """
-        <script>
-            if (window.opener) {
-                window.opener.microsoftTeams.authentication.notifySuccess();
-                window.close();
-            } else {
-                window.location.href = '/';
-            }
-        </script>
-    """
+@app.route("/auth")
+def auth_start():
+    # Diese Route dient als Popup-Startpunkt für die Authentifizierung in Teams
+    auth_url = url_for("login", _external=True)
+    return render_template("auth_start.html", auth_url=auth_url)
 
 @app.route("/login")
 def login():

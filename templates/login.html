@@ -3,36 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>Microsoft Identity Python Web App: Login</title>
-    <script src="https://statics.teams.cdn.office.net/sdk/v1.6.0/js/MicrosoftTeams.min.js"></script>
+    <!-- Teams SDK v2 -->
+    <script src="https://statics.teams.cdn.office.net/sdk/v2.0.0/js/MicrosoftTeams.min.js"></script>
     <script>
-        // Initialisiere das Microsoft Teams SDK
-        microsoftTeams.initialize();
+        // Initialisiere das Teams SDK v2
+        microsoftTeams.app.initialize();
 
-        // Funktion für die Authentifizierung in Microsoft Teams
         function loginInTeams() {
-            microsoftTeams.authentication.authenticate({
-                url: "{{ auth_uri }}",  // Verwende auth_uri für die Weiterleitung
+            // Aufruf der Authentifizierung in Microsoft Teams
+            microsoftTeams.authentication.initiateAuth({
+                // Diese URL muss in der Azure AD App registriert sein
+                url: window.location.origin + "/auth-start",  
                 width: 600,
                 height: 535,
                 successCallback: function (result) {
                     console.log("Login erfolgreich:", result);
-                    window.location.href = '/';
+                    window.location.href = '/';  // Bei Erfolg zur Startseite weiterleiten
                 },
                 failureCallback: function (reason) {
                     console.error("Login fehlgeschlagen:", reason);
-                    alert("Fehler bei der Authentifizierung.");
+                    alert("Fehler bei der Authentifizierung: " + reason);
                 }
             });
         }
 
-        // Erkennung, ob die Seite innerhalb von Microsoft Teams geladen wird
+        // Erkennen, ob die Seite innerhalb von Teams geladen wird
         document.addEventListener("DOMContentLoaded", function () {
-            microsoftTeams.getContext(function (context) {
-                // Wenn innerhalb von Teams geladen, dann Teams-Button anzeigen
+            microsoftTeams.app.getContext().then(function (context) {
                 if (context) {
                     document.getElementById("teamsLoginButton").style.display = "block";
                     document.getElementById("standardLogin").style.display = "none";
                 }
+            }).catch(function (error) {
+                console.error("Fehler beim Abrufen des Teams-Kontexts:", error);
             });
         });
     </script>

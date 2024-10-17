@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teams Authentication</title>
+    <script>
+        // Sobald die Seite geladen ist, starte die Authentifizierung
+        window.onload = function() {
+            window.location.href = "{{ auth_url }}";  // Leite den Benutzer zu deinem normalen Login weiter
+        };
+    </script>
+</head>
+<body>
+    <h1>Authenticating...</h1>
+</body>
+</html>
