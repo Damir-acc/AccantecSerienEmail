@@ -2,7 +2,6 @@ import os
 import re
 import shutil
 import pandas as pd
-import smtplib
 import base64
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -55,8 +54,6 @@ def logout():
 @app.route("/")
 def index():
     if not (app.config["CLIENT_ID"] and app.config["CLIENT_SECRET"]):
-        # This check is not strictly necessary.
-        # You can remove this check from your production code.
         return render_template('config_error.html')
     if not auth.get_user():
         return redirect(url_for("login"))
@@ -170,9 +167,8 @@ def validate_file_type(file_path, expected_extensions):
         with lock:
             status_messages.append(error_message)  # Hinzufügen der Fehlermeldung zu den Statusmeldungen
         raise ValueError(error_message)
-    
+
 def get_user_email(access_token):
-    # Use access token to call downstream api
     global lock 
     global status_messages
     response = requests.get(
@@ -183,7 +179,6 @@ def get_user_email(access_token):
     
     with lock:
         status_messages.append(f"Response Status Code: {response.status_code}")
-    # Überprüfen des Statuscodes der Antwort
     if response.status_code == 200:
         user_info = response.json()
         if "mail" in user_info:
@@ -193,8 +188,9 @@ def get_user_email(access_token):
     else:
         raise Exception(f"Error getting user email: {response.status_code} - {response.text}")
 
+
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
-def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, user_email, access_token, attachments, logo_path):
+def send_emails(word_file_path, excel_file_path, signature_path, user_email, access_token, attachments, logo_path):
     global progress_percentage, status_messages, abort_flag, emails_completed
     global lock  # Verwenden des Locks für Thread-Sicherheit
 
@@ -269,15 +265,16 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                     print(f'Anhang für {email} konnte nicht hinzugefügt werden. Datei "{attachment_path}" nicht gefunden oder ist das Logo.')
 
             try:
-                # Mit SMTP-Server verbinden
-                with smtplib.SMTP(smtp_server, smtp_port) as server:
-                    server.starttls()
 
-                    # Anmelden mit XOAUTH2
-                    auth_string = generate_xoauth2_token(user_email, access_token['access_token'])
-                    server.docmd('AUTH', 'XOAUTH2 ' + auth_string)
-
-                    server.send_message(msg)
+                # E-Mail über Microsoft Graph API senden
+                response = requests.post(
+                "https://graph.microsoft.com/v1.0/me/sendMail",
+                headers={
+                    'Authorization': 'Bearer ' + access_token['access_token'],
+                    'Content-Type': 'application/json'
+                },
+                json=msg
+                )
 
                 # Fortschritt und Statusmeldung aktualisieren (Thread-sicher)
                 with lock:
@@ -301,10 +298,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     with lock:
         emails_completed = True
 
-# Funktion, um die XOAUTH2-Zeichenfolge zu erstellen
-def generate_xoauth2_token(user_email, access_token):
-    auth_string = f"user={user_email}\1auth=Bearer {access_token}\1\1"
-    return base64.b64encode(auth_string.encode('utf-8')).decode('utf-8')
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
@@ -371,12 +365,13 @@ def upload_files():
 
         # Sende die E-Mails in einem separaten Thread
         from threading import Thread
-        thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, user_email, access_token, attachment_filenames, logo_path))
+        thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, user_email, access_token, attachment_filenames, logo_path))
         thread.start()
 
         return redirect(url_for('upload_files'))
 
     return render_template('email_send.html')
+
 
 @app.route('/api/abort', methods=['POST'])
 def abort():
