@@ -5,11 +5,13 @@
     <title>Microsoft Identity Python Web App: Login</title>
     <script src="https://statics.teams.cdn.office.net/sdk/v1.6.0/js/MicrosoftTeams.min.js"></script>
     <script>
+        // Initialisiere das Microsoft Teams SDK
         microsoftTeams.initialize();
 
-        function login() {
+        // Funktion für die Authentifizierung in Microsoft Teams
+        function loginInTeams() {
             microsoftTeams.authentication.authenticate({
-                url: "{{ url_for('login') }}",  // URL zum Flask-Login-Endpunkt
+                url: "{{ auth_uri }}",  // Verwende auth_uri für die Weiterleitung
                 width: 600,
                 height: 535,
                 successCallback: function (result) {
@@ -23,14 +25,37 @@
             });
         }
 
+        // Erkennung, ob die Seite innerhalb von Microsoft Teams geladen wird
         document.addEventListener("DOMContentLoaded", function () {
-            document.getElementById("loginButton").onclick = login;
+            microsoftTeams.getContext(function (context) {
+                // Wenn innerhalb von Teams geladen, dann Teams-Button anzeigen
+                if (context) {
+                    document.getElementById("teamsLoginButton").style.display = "block";
+                    document.getElementById("standardLogin").style.display = "none";
+                }
+            });
         });
     </script>
 </head>
 <body>
     <h1>Microsoft Identity Python Web App</h1>
-    <button id="loginButton">Login in Microsoft Teams</button>
+
+    <!-- Teams-spezifischer Login-Button, der nur angezeigt wird, wenn in Teams -->
+    <button id="teamsLoginButton" style="display:none;" onclick="loginInTeams()">Login in Microsoft Teams</button>
+
+    <!-- Standard-Login, falls der Benutzer nicht in Microsoft Teams ist -->
+    <div id="standardLogin">
+        {% if user_code %}
+        <ol>
+            <li>To sign in, type <b>{{ user_code }}</b> into
+                <a href='{{ auth_uri }}' target=_blank>{{ auth_uri }}</a> to authenticate.
+            </li>
+            <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
+        </ol>
+        {% else %}
+        <ul><li><a href='{{ auth_uri }}'>Sign In</a></li></ul>
+        {% endif %}
+    </div>
 
     <hr>
     <footer style="text-align: right">Microsoft identity platform Web App Sample {{ version }}</footer>
