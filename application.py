@@ -50,7 +50,7 @@ def auth_response():
 def login():
     return render_template("login.html", version='1.0', **auth.log_in(
         scopes=application_config.SCOPE, # Have user consent to scopes during log-in
-        redirect_uri=url_for("auth_response", _external=True), # Optional. If present, this absolute URL must match your app's redirect_uri registered in Microsoft Entra admin center
+        redirect_uri=url_for("auth_response", _external=True, _scheme="https"), # Optional. If present, this absolute URL must match your app's redirect_uri registered in Microsoft Entra admin center
         prompt="select_account",  # Optional.
         ))
 
@@ -60,10 +60,10 @@ def logout():
 
 @app.route("/")
 def index():
-    #if not (app.config["CLIENT_ID"] and app.config["CLIENT_SECRET"]):
+    if not (app.config["CLIENT_ID"] and app.config["CLIENT_SECRET"]):
         # This check is not strictly necessary.
         # You can remove this check from your production code.
-    #    return render_template('config_error.html')
+        return render_template('config_error.html')
     if not auth.get_user():
         return redirect(url_for("login"))
     return render_template('index.html', user=auth.get_user(), version='1.0')
