@@ -227,6 +227,7 @@
         let previousMessages = [];  // Speichern der vorherigen Statusmeldungen
         function fetchStatusMessages() {
             $.get('/api/status', function(data) {
+                $('#statusMessages').empty();
                 data.forEach(function(message) {
                     if (!previousMessages.includes(message)) {
                         // Neue Nachricht zur Liste hinzufügen, wenn sie noch nicht existiert

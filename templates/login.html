@@ -23,6 +23,7 @@
 
         let previousMessages = [];  // Speichern der vorherigen Statusmeldungen
         function fetchStatusMessages() {
+            $('#statusMessages').empty();
             $.get('/api/status', function(data) {
                 data.forEach(function(message) {
                     if (!previousMessages.includes(message)) {
