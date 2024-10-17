@@ -356,23 +356,8 @@ def upload_files():
         smtp_server = 'smtp.office365.com'
         smtp_port = 587
 
-        with lock:
-            status_messages.append(f"Before access token")
         access_token = auth.get_token_for_user(application_config.SCOPE)
-        with lock:
-            status_messages.append(f"Token: {access_token}.")
-        with lock:
-            status_messages.append(f"Before user_email information")
-
-
-        try:
-            user_email = get_user_email(access_token)
-            with lock:
-               status_messages.append(f"User E-Mail: {user_email}.")
-        except Exception as e:
-            with lock:
-               status_messages.append(f"Fehler beim Abrufen der Benutzer-E-Mail: {str(e)}")
-        return jsonify({'error': str(e)}), 400
+        user_email = get_user_email(access_token)
 
         # Sende die E-Mails in einem separaten Thread
         from threading import Thread
