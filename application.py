@@ -3,6 +3,7 @@ import re
 import shutil
 import pandas as pd
 import smtplib
+import base64
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
@@ -268,10 +269,14 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                     print(f'Anhang für {email} konnte nicht hinzugefügt werden. Datei "{attachment_path}" nicht gefunden oder ist das Logo.')
 
             try:
-                # E-Mail über den SMTP-Server senden
+                # Mit SMTP-Server verbinden
                 with smtplib.SMTP(smtp_server, smtp_port) as server:
                     server.starttls()
-                    server.login(user_email, access_token)
+
+                    # Anmelden mit XOAUTH2
+                    auth_string = generate_xoauth2_token(user_email, access_token['access_token'])
+                    server.docmd('AUTH', 'XOAUTH2 ' + auth_string)
+
                     server.send_message(msg)
 
                 # Fortschritt und Statusmeldung aktualisieren (Thread-sicher)
@@ -295,6 +300,11 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     # Versand abgeschlossen oder abgebrochen
     with lock:
         emails_completed = True
+
+# Funktion, um die XOAUTH2-Zeichenfolge zu erstellen
+def generate_xoauth2_token(user_email, access_token):
+    auth_string = f"user={user_email}\1auth=Bearer {access_token}\1\1"
+    return base64.b64encode(auth_string.encode('utf-8')).decode('utf-8')
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
