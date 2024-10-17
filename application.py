@@ -18,13 +18,6 @@ from flask_session import Session
 
 import application_config
 
-# Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
-progress_percentage = 0
-status_messages = []
-abort_flag = False
-emails_completed = False  # Neue Variable, um den Abschluss zu verfolgen
-lock = threading.Lock()  # Lock, um Threads zu synchronisieren
-
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
 app.config.from_object(application_config)
@@ -80,6 +73,17 @@ def call_downstream_api():
         timeout=30,
     ).json()
     return render_template('display.html', result=api_result)
+
+@app.route("/email_send")
+def email_send():
+    return render_template('email_send.html')
+
+# Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
+progress_percentage = 0
+status_messages = []
+abort_flag = False
+emails_completed = False  # Neue Variable, um den Abschluss zu verfolgen
+lock = threading.Lock()  # Lock, um Threads zu synchronisieren
 
 # Definiere den Upload-Ordner
 UPLOAD_FOLDER = 'uploads'
