@@ -7,33 +7,41 @@
     <script src="https://statics.teams.cdn.office.net/sdk/v2.0.0/js/MicrosoftTeams.min.js"></script>
     <script>
         // Initialisiere das Teams SDK v2
-        microsoftTeams.app.initialize().then(() => {
-            console.log("Teams SDK erfolgreich initialisiert.");
+        function initializeTeamsSdk() {
+            return new Promise((resolve, reject) => {
+                microsoftTeams.initialize();
+                microsoftTeams.getContext((context) => {
+                    if (context) {
+                        resolve(context);
+                    } else {
+                        reject("Kontext konnte nicht abgerufen werden.");
+                    }
+                });
+            });
+        }
 
-            // Hol den Kontext der App
-            microsoftTeams.app.getContext().then((context) => {
+        // Teams-spezifische Logik
+        document.addEventListener("DOMContentLoaded", function () {
+            initializeTeamsSdk().then((context) => {
                 console.log("Kontext erhalten:", context);
-
                 // Prüfe, ob die App in Microsoft Teams läuft
                 if (context.app.host.name === "Teams") {
                     console.log("App läuft in Microsoft Teams");
-                    // Zeige den Teams-Login-Button an
-                    document.getElementById("teamsLoginButton").style.display = "block";
-                    document.getElementById("standardLogin").style.display = "none";
+                    document.getElementById("teamsLoginButton").style.display = "block"; // Zeige Teams Login Button
+                    document.getElementById("standardLogin").style.display = "none"; // Verstecke Standard Login
                 } else {
                     console.log("App läuft nicht in Microsoft Teams");
                 }
             }).catch((error) => {
                 console.error("Fehler beim Abrufen des App-Kontexts:", error);
+                document.getElementById("error").innerText = error; // Zeige Fehlermeldung an
             });
-        }).catch((error) => {
-            console.error("Fehler bei der Initialisierung des Teams SDK:", error);
         });
 
         // Funktion für die Authentifizierung in Microsoft Teams
         function loginInTeams() {
             microsoftTeams.authentication.initiateAuth({
-                url: window.location.origin + "/auth-start",  
+                url: window.location.origin + "/auth-start",
                 width: 600,
                 height: 535,
                 successCallback: function (result) {
@@ -51,6 +59,8 @@
 <body>
     <h1>Microsoft Identity Python Web App</h1>
 
+    <div id="error" style="color: red;"></div> <!-- Fehlerausgabe -->
+    
     <!-- Teams-spezifischer Login-Button, der nur angezeigt wird, wenn in Teams -->
     <button id="teamsLoginButton" style="display:none;" onclick="loginInTeams()">Login in Microsoft Teams</button>
 
