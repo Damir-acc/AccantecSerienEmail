@@ -3,70 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Microsoft Identity Python Web App: Login</title>
-    <!-- Teams SDK v2 -->
-    <script src="https://statics.teams.cdn.office.net/sdk/v2.0.0/js/MicrosoftTeams.min.js" defer></script>
-    <script>
-        // Führe den Code aus, nachdem das Skript geladen wurde
-        document.addEventListener("DOMContentLoaded", function () {
-            microsoftTeams.initialize();
-
-            microsoftTeams.getContext((context) => {
-                if (context) {
-                    console.log("Kontext erhalten:", context);
-                    // Prüfe, ob die App in Microsoft Teams läuft
-                    if (context.app.host.name === "Teams") {
-                        console.log("App läuft in Microsoft Teams");
-                        document.getElementById("teamsLoginButton").style.display = "block"; // Zeige Teams Login Button
-                        document.getElementById("standardLogin").style.display = "none"; // Verstecke Standard Login
-                    } else {
-                        console.log("App läuft nicht in Microsoft Teams");
-                    }
-                } else {
-                    console.error("Kontext konnte nicht abgerufen werden.");
-                    document.getElementById("error").innerText = "Kontext konnte nicht abgerufen werden.";
-                }
-            });
-        });
-
-        // Funktion für die Authentifizierung in Microsoft Teams
-        function loginInTeams() {
-            microsoftTeams.authentication.initiateAuth({
-                url: window.location.origin + "/auth-start",
-                width: 600,
-                height: 535,
-                successCallback: function (result) {
-                    console.log("Login erfolgreich:", result);
-                    window.location.href = '/';  // Bei Erfolg zur Startseite weiterleiten
-                },
-                failureCallback: function (reason) {
-                    console.error("Login fehlgeschlagen:", reason);
-                    alert("Fehler bei der Authentifizierung: " + reason);
-                }
-            });
-        }
-    </script>
 </head>
 <body>
     <h1>Microsoft Identity Python Web App</h1>
 
-    <div id="error" style="color: red;"></div> <!-- Fehlerausgabe -->
-    
-    <!-- Teams-spezifischer Login-Button, der nur angezeigt wird, wenn in Teams -->
-    <button id="teamsLoginButton" style="display:none;" onclick="loginInTeams()">Login in Microsoft Teams</button>
-
-    <!-- Standard-Login, falls der Benutzer nicht in Microsoft Teams ist -->
-    <div id="standardLogin">
-        {% if user_code %}
-        <ol>
-            <li>To sign in, type <b>{{ user_code }}</b> into
-                <a href='{{ auth_uri }}' target=_blank>{{ auth_uri }}</a> to authenticate.
-            </li>
-            <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
-        </ol>
-        {% else %}
-        <ul><li><a href='{{ auth_uri }}'>Sign In</a></li></ul>
-        {% endif %}
-    </div>
+    {% if user_code %}
+    <ol>
+      <li>To sign in, type <b>{{ user_code }}</b> into
+        <a href='{{ auth_uri }}' target=_blank>{{ auth_uri }}</a>
+        to authenticate.
+      </li>
+      <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
+    </ol>
+    {% else %}
+    <ul><li><a href='{{ auth_uri }}'>Sign In</a></li></ul>
+    {% endif %}
 
     <hr>
     <footer style="text-align: right">Microsoft identity platform Web App Sample {{ version }}</footer>

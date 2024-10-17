@@ -46,12 +46,6 @@ def auth_response():
         return render_template("auth_error.html", result=result)
     return redirect(url_for("index"))
 
-@app.route("/auth")
-def auth_start():
-    # Diese Route dient als Popup-Startpunkt für die Authentifizierung in Teams
-    auth_url = url_for("login", _external=True)
-    return render_template("auth_start.html", auth_url=auth_url)
-
 @app.route("/login")
 def login():
     return render_template("login.html", version='1.0', **auth.log_in(
