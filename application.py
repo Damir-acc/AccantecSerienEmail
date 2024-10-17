@@ -44,14 +44,25 @@ def auth_response():
     result = auth.complete_log_in(request.args)
     if "error" in result:
         return render_template("auth_error.html", result=result)
-    return redirect(url_for("index"))
+
+    # Schließe das Popup und signalisiere an Teams, dass die Authentifizierung abgeschlossen ist
+    return """
+        <script>
+            if (window.opener) {
+                window.opener.microsoftTeams.authentication.notifySuccess();
+                window.close();
+            } else {
+                window.location.href = '/';
+            }
+        </script>
+    """
 
 @app.route("/login")
 def login():
     return render_template("login.html", version='1.0', **auth.log_in(
         scopes=application_config.SCOPE, # Have user consent to scopes during log-in
         redirect_uri=url_for("auth_response", _external=True, _scheme="https"), # Optional. If present, this absolute URL must match your app's redirect_uri registered in Microsoft Entra admin center
-        #prompt="select_account",  # Optional.
+        prompt="select_account",  # Optional.
         ))
 
 @app.route("/logout")

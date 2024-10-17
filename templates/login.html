@@ -3,21 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>Microsoft Identity Python Web App: Login</title>
+    <script src="https://statics.teams.cdn.office.net/sdk/v1.6.0/js/MicrosoftTeams.min.js"></script>
+    <script>
+        microsoftTeams.initialize();
+
+        function login() {
+            microsoftTeams.authentication.authenticate({
+                url: "{{ url_for('login') }}",  // URL zum Flask-Login-Endpunkt
+                width: 600,
+                height: 535,
+                successCallback: function (result) {
+                    console.log("Login erfolgreich:", result);
+                    window.location.href = '/';
+                },
+                failureCallback: function (reason) {
+                    console.error("Login fehlgeschlagen:", reason);
+                    alert("Fehler bei der Authentifizierung.");
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("loginButton").onclick = login;
+        });
+    </script>
 </head>
 <body>
     <h1>Microsoft Identity Python Web App</h1>
-
-    {% if user_code %}
-    <ol>
-      <li>To sign in, type <b>{{ user_code }}</b> into
-        <a href='{{ auth_uri }}' target=_blank>{{ auth_uri }}</a>
-        to authenticate.
-      </li>
-      <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
-    </ol>
-    {% else %}
-    <ul><li><a href='{{ auth_uri }}'>Sign In</a></li></ul>
-    {% endif %}
+    <button id="loginButton">Login in Microsoft Teams</button>
 
     <hr>
     <footer style="text-align: right">Microsoft identity platform Web App Sample {{ version }}</footer>
