@@ -1,21 +1,12 @@
 numpy==1.26.4                     # Für numerische Berechnungen
-Flask==2.1.2                      # Web-Framework für die App
-flask_wtf==1.2.1
+Flask>=2.2
+Flask-Session>=0.3.2,<0.6
 pandas==1.5.3                     # Verarbeitung von Excel-Dateien
 python-docx==1.1.1                # Verarbeitung von Word-Dokumenten
 openpyxl==3.0.9                   # Lesen/Schreiben von Excel-Dateien
-Werkzeug==2.1.2                   # Werkzeug für Flask, z.B. Datei-Uploads
+werkzeug>=2
 gunicorn==20.1.0                  # HTTP-Server für die Bereitstellung der App
+requests>=2,<3
+identity>=0.5.1,<0.6
+python-dotenv<0.22 
 
-# OAuth2 für Microsoft Login
-requests-oauthlib==1.3.1          # OAuth2 für Anfragen an die Microsoft API
-msal==1.15.0                      # Microsoft Authentication Library (MSAL) für OAuth2 Login
-authlib==1.1.0                    # Authlib für OAuth2-Integration
-
-# Für das Versenden von E-Mails via OAuth2
-google-auth==2.6.6                # Authentifizierung mit Google-Services, falls notwendig
-google-auth-oauthlib==0.4.6       # OAuth2-Integration für Google APIs
-google-auth-httplib2==0.1.0       # HTTP-Client-Integration für OAuth2
-
-# Für das E-Mail-Versenden (mit OAuth2-Tokens)
-pyjwt==2.4.0                      # Erzeugung und Validierung von JWT-Tokens (kann für OAuth2 verwendet werden)

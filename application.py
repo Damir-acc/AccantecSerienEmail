@@ -3,20 +3,20 @@ import re
 import shutil
 import pandas as pd
 import smtplib
-from datetime import timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
-from authlib.integrations.flask_client import OAuth
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import threading  # Für den Thread-Safe-Mechanismus
 import time
-import secrets  # Für die Generierung des State-Wertes
-from flask_wtf.csrf import CSRFProtect
+import identity.web
 import requests
+from flask import Flask, redirect, render_template, request, session, url_for
+from flask_session import Session
 
+import application_config
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
@@ -27,31 +27,59 @@ lock = threading.Lock()  # Lock, um Threads zu synchronisieren
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ändere dies in einen sicheren Schlüssel
-app.config['SESSION_TYPE'] = 'filesystem'
-# Sicherstellen, dass die Cookies für HTTPS korrekt gesetzt werden
-app.config['SESSION_COOKIE_SECURE'] = True  # Nur über HTTPS senden
-app.config['SESSION_COOKIE_HTTPONLY'] = True  # Schutz vor JavaScript-Zugriff
-app.config['SESSION_COOKIE_SAMESITE'] = None  # Schutz vor CSRF-Angriffen, kann auch 'Strict' sein
-app.config['SESSION_PERMANENT'] = False  # Nicht-permanente Sitzung verwenden, um sicherzustellen, dass Cookies schnell aktualisiert werden
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
-csrf = CSRFProtect(app)
+app.config.from_object(application_config)
+assert app.config["REDIRECT_PATH"] != "/", "REDIRECT_PATH must not be /"
+Session(app)
 
-# OAuth Konfiguration
-oauth = OAuth(app)
-oauth.register(
-    name='azure',
-    client_id='ba945a46-b88a-4115-81df-fa5ab4028feb',  # Deine Client-ID hier einfügen
-    client_secret='TAg8Q~qE2XzMm~mprArqxOt74ai0_32TVEbTicYd',
-    access_token_url='https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/token',
-    authorize_url='https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/authorize',
-    api_base_url='https://graph.microsoft.com/v1.0/',
-    jwks_uri= 'https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/discovery/v2.0/keys',
-    client_kwargs={
-        'scope': 'openid profile email',
-        'code_challenge_method': 'S256',
-        'issuer': f'https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/v2.0'  # Setze den Issuer hier ein
-    },
+app.jinja_env.globals.update(Auth=identity.web.Auth)  # Useful in template for B2C
+auth = identity.web.Auth(
+    session=session,
+    authority=app.config["AUTHORITY"],
+    client_id=app.config["CLIENT_ID"],
+    client_credential=app.config["CLIENT_SECRET"],
 )
+
+@app.route(application_config.REDIRECT_PATH)
+def auth_response():
+    result = auth.complete_log_in(request.args)
+    if "error" in result:
+        return render_template("auth_error.html", result=result)
+    return redirect(url_for("index"))
+
+@app.route("/login")
+def login():
+    return render_template("login.html", version='1.0', **auth.log_in(
+        scopes=application_config.SCOPE, # Have user consent to scopes during log-in
+        redirect_uri=url_for("auth_response", _external=True), # Optional. If present, this absolute URL must match your app's redirect_uri registered in Microsoft Entra admin center
+        prompt="select_account",  # Optional.
+        ))
+
+@app.route("/logout")
+def logout():
+    return redirect(auth.log_out(url_for("index", _external=True)))
+
+@app.route("/")
+def index():
+    if not (app.config["CLIENT_ID"] and app.config["CLIENT_SECRET"]):
+        # This check is not strictly necessary.
+        # You can remove this check from your production code.
+        return render_template('config_error.html')
+    if not auth.get_user():
+        return redirect(url_for("login"))
+    return render_template('index.html', user=auth.get_user(), version='1.0')
+
+@app.route("/call_downstream_api")
+def call_downstream_api():
+    token = auth.get_token_for_user(application_config.SCOPE)
+    if "error" in token:
+        return redirect(url_for("login"))
+    # Use access token to call downstream api
+    api_result = requests.get(
+        application_config.ENDPOINT,
+        headers={'Authorization': 'Bearer ' + token['access_token']},
+        timeout=30,
+    ).json()
+    return render_template('display.html', result=api_result)
 
 # Definiere den Upload-Ordner
 UPLOAD_FOLDER = 'uploads'
@@ -139,7 +167,7 @@ def validate_file_type(file_path, expected_extensions):
         raise ValueError(error_message)
 
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
-def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, token, attachments, logo_path):
+def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
     global progress_percentage, status_messages, abort_flag, emails_completed
     global lock  # Verwenden des Locks für Thread-Sicherheit
 
@@ -217,8 +245,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
                 # E-Mail über den SMTP-Server senden
                 with smtplib.SMTP(smtp_server, smtp_port) as server:
                     server.starttls()
-                    server.ehlo()
-                    server.auth("Bearer", token)  # Verwende das Token hier zur Authentifizierung
+                    server.login(username, password)
                     server.send_message(msg)
 
                 # Fortschritt und Statusmeldung aktualisieren (Thread-sicher)
@@ -243,163 +270,9 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
     with lock:
         emails_completed = True
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/test_session')
-def test_session():
-    session['test'] = 'test_value'
-    return session['test']
-
-@app.route('/login')
-def login():
-    # Hier wird keine Weiterleitung zu OAuth2 durchgeführt, sondern das Teams SDK verwendet
-    global status_messages, lock
-    with lock:
-       status_messages.append("In LOGIN")
-    return render_template('login.html')
-
-@app.route('/auth_popup')
-def auth_popup():
-    global status_messages, lock
-    with lock:
-       status_messages.append("In Auth PopUp")
-    # OAuth-Flow starten
-    redirect_uri = url_for('auth', _external=True, _scheme='https')
-    authorize_url='https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/authorize'
-    client_id='ba945a46-b88a-4115-81df-fa5ab4028feb'
-    # Generiere einen zufälligen state-Wert
-    state = secrets.token_urlsafe(16)
-    session['oauth_state'] = state  # Speichere den state in der Sitzung
-    session.modified = True  # Markiere die Sitzung als geändert
-    with lock:
-       status_messages.append(f"Redirect URL: {redirect_uri}")
-    try:
-        # Authorization URL generieren
-        #if not callable(oauth.azure.authorize_url):
-        #    return jsonify({"error": "authorize_url ist kein callable."}), 500
-        #authorization_url = f"{authorize_url}?client_id={client_id}&response_type=code&redirect_uri={redirect_uri}&state={state}&scope=User.Read"
-        #authorization_url_test = oauth.azure.authorize_url(redirect_uri, state=state)
-        # Manuelles Erstellen der Autorisierungs-URL
-        authorization_url = (
-            f"https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/authorize?"
-            f"client_id={oauth.azure.client_id}&response_type=code&redirect_uri={redirect_uri}&state={state}&scope={oauth.azure.client_kwargs['scope']}"
-        )
-        with lock:
-            status_messages.append(f"Authorization URL: {authorization_url}")
-        # Der Microsoft Teams SDK erwartet eine JavaScript-basierte Weiterleitung.
-        return f"""
-        <script>
-            // Den State-Wert, wenn nötig, im localStorage speichern
-            localStorage.setItem('oauth_state', '{state}');
-
-            // Weiterleiten zur OAuth2-Seite
-            window.location.href = '{authorization_url}';
-        </script>
-        """
-    except Exception as e:
-        with lock:
-            status_messages.append(f"Error during authorization redirect: {str(e)}")
-        return jsonify({"error": "Failed to create authorization URL."}), 500
-
-@app.route('/auth')
-def auth():
-    global status_messages, lock
-    with lock:
-        status_messages.append("In Auth")
-    
-    token = None
-
-    # Überprüfe den state-Parameter aus der Sitzung
-    state = session.get('oauth_state')
-    with lock:
-        status_messages.append(f"State: {state}")
-    
-    # Hole den state-Parameter aus der Anfrage
-    request_state = request.args.get('state')
-    with lock:
-        status_messages.append(f"Request-State: {request_state}")
-    
-    # Vergleiche die beiden state-Werte
-    if state != request_state:
-        return jsonify({"error": "State mismatch. Potential CSRF attack."}), 400
-    
-    # Hole den Autorisierungscode
-    authorization_code = request.args.get('code')
-    if not authorization_code:
-        return jsonify({"error": "Authorization code is missing."}), 400
-
-    # Token URL und die Daten für den POST-Request definieren
-    token_url = "https://login.microsoftonline.com/5929d0be-afb9-4b00-ad5f-55727c54f4e7/oauth2/v2.0/token"
-    data = {
-        'grant_type': 'authorization_code',
-        'code': authorization_code,
-        'redirect_uri': 'https://accantecserienemail.azurewebsites.net/auth',
-        'client_id': 'ba945a46-b88a-4115-81df-fa5ab4028feb',
-        'client_secret': 'TAg8Q~qE2XzMm~mprArqxOt74ai0_32TVEbTicYd'
-    }
-
-    # Führe den POST-Request aus, um den Token abzurufen
-    try:
-        response = requests.post(token_url, data=data)
-        if response.ok:
-            token = response.json()  # Der Token ist jetzt in der 'token'-Variablen.
-            with lock:
-                status_messages.append(f"Token: {token}")
-            session['token'] = token  # Token in der Session speichern
-
-            # Benutzerdaten mit access_token abrufen
-            headers = {
-                'Authorization': f"Bearer {token['access_token']}",
-                'Content-Type': 'application/json'
-            }
-            user_info_response = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
-            
-            if user_info_response.ok:
-                user = user_info_response.json()
-                with lock:
-                    status_messages.append(f"User: {user}")
-                session['user'] = user
-            else:
-                with lock:
-                    status_messages.append(f"Error retrieving user info: {user_info_response.text}")
-                return jsonify({"error": "Error retrieving user info"}), 400
-
-        else:
-            with lock:
-                status_messages.append(f"Error response: {response.text}")
-            return jsonify({"error": f"Error retrieving token: {response.text}"}), 400
-            
-    except Exception as e:
-        with lock:
-            status_messages.append(f"Error retrieving token: {str(e)}")
-            status_messages.append("Error retrieving token!!!!")
-        return f"""
-        <script>
-            microsoftTeams.authentication.notifyFailure("Error retrieving token: {str(e)}");
-        </script>
-        """
-    
-    # Erfolgreich, Benutzer zur Microsoft Teams App weiterleiten
-    status_messages.append(f"Success should go back to Microsoft Teams App again")
-    return """
-    <script>
-        microsoftTeams.authentication.notifySuccess("Login successful");
-    </script>
-    """
-
-
-@app.route('/upload', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def upload_files():
     global progress_percentage, status_messages, abort_flag, emails_completed
-
-    # Prüfen, ob der Benutzer angemeldet ist
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    
-    # Token abrufen
-    token = oauth.azure.token  # Zugriffstoken abrufen
 
     # Fortschritt und Statusmeldungen beim Neuladen der Seite zurücksetzen
     if request.method == 'GET':
@@ -418,9 +291,8 @@ def upload_files():
         excel_file = request.files['excel_file']
         signature_file = request.files['signature_file']
         logo_file = request.files['logo_file']
-        username = session['user']['mail']  # E-Mail des Benutzers verwenden
-        # Du benötigst möglicherweise ein Token, um den SMTP-Server zu verwenden.
-        # password wird hier nicht mehr benötigt, weil die Authentifizierung über Azure AD erfolgt.
+        username = request.form['email_user']
+        password = request.form['email_pass']
 
         # Dateien speichern
         word_file_path = os.path.join(UPLOAD_FOLDER, word_file.filename)
@@ -438,6 +310,7 @@ def upload_files():
            validate_file_type(word_file_path, '.docx')
            validate_file_type(excel_file_path, '.xlsx')
            validate_file_type(signature_path, ['.htm','.html'])
+           validate_file_type(logo_path, ['.png','.jpg','.gif'])
            validate_file_type(logo_path, ['.png','.jpg','.jpeg','.gif'])
         except ValueError as ve:
            # Rückgabe der Fehlermeldung an das Frontend
@@ -459,12 +332,12 @@ def upload_files():
 
         # Sende die E-Mails in einem separaten Thread
         from threading import Thread
-        thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, token, attachment_filenames, logo_path))
+        thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path))
         thread.start()
 
-        return redirect(url_for('index'))
+        return redirect(url_for('upload_files'))
 
-    return render_template('index.html', user=session['user'])
+    return render_template('index.html')
 
 @app.route('/api/abort', methods=['POST'])
 def abort():
