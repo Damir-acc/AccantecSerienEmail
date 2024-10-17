@@ -186,7 +186,7 @@ def get_user_email(access_token):
         raise Exception(f"Error getting user email: {api_result.status_code} - {api_result.text}")
 
 # E-Mail-Senden-Funktion (mit Fortschritt, Statusmeldungen und Abbruchüberprüfung)
-def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachments, logo_path):
+def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, user_email, access_token, attachments, logo_path):
     global progress_percentage, status_messages, abort_flag, emails_completed
     global lock  # Verwenden des Locks für Thread-Sicherheit
 
@@ -231,18 +231,10 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
             email_body += "<br><br>" + updated_signature
 
             msg = MIMEMultipart('related')
-            msg['From'] = username
+            msg['From'] = user_email
             msg['To'] = email
             msg['Subject'] = betreff
             msg.attach(MIMEText(email_body, 'html', 'UTF-8'))
-            with lock:
-                status_messages.append(f"Before access token")
-            access_token = auth.get_token_for_user(application_config.SCOPE)
-            with lock:
-                status_messages.append(f"Token: {access_token}.")
-            user_email=get_user_email(access_token)
-            with lock:
-                status_messages.append(f"User E-Mail: {user_email}.")
 
             # Logo einbetten (ohne als regulären Anhang zu versenden)
             try:
@@ -357,15 +349,19 @@ def upload_files():
         smtp_server = 'smtp.office365.com'
         smtp_port = 587
 
+        with lock:
+            status_messages.append(f"Before access token")
+        access_token = auth.get_token_for_user(application_config.SCOPE)
+        with lock:
+            status_messages.append(f"Token: {access_token}.")
+        user_email=get_user_email(access_token)
+        with lock:
+            status_messages.append(f"User E-Mail: {user_email}.")
+
         # Sende die E-Mails in einem separaten Thread
         from threading import Thread
-        @copy_current_request_context
-        def thread_function():
-           send_emails(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path)
-           #thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, username, password, attachment_filenames, logo_path))
-        thread = Thread(target=thread_function)
+        thread = Thread(target=send_emails, args=(word_file_path, excel_file_path, signature_path, smtp_server, smtp_port, user_email, access_token, attachment_filenames, logo_path))
         thread.start()
-        #thread.start()
 
         return redirect(url_for('upload_files'))
 
