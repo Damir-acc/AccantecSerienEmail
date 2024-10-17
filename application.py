@@ -235,12 +235,14 @@ def send_emails(word_file_path, excel_file_path, signature_path, smtp_server, sm
             msg['To'] = email
             msg['Subject'] = betreff
             msg.attach(MIMEText(email_body, 'html', 'UTF-8'))
-
+            with lock:
+                status_messages.append(f"Before access token")
             access_token = auth.get_token_for_user(application_config.SCOPE)
+            with lock:
+                status_messages.append(f"Token: {access_token}.")
             user_email=get_user_email(access_token)
             with lock:
                 status_messages.append(f"User E-Mail: {user_email}.")
-                status_messages.append(f"Token: {access_token}.")
 
             # Logo einbetten (ohne als regulären Anhang zu versenden)
             try:
