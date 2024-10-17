@@ -354,6 +354,8 @@ def upload_files():
         access_token = auth.get_token_for_user(application_config.SCOPE)
         with lock:
             status_messages.append(f"Token: {access_token}.")
+        with lock:
+            status_messages.append(f"Before user_email information")
         user_email=get_user_email(access_token)
         with lock:
             status_messages.append(f"User E-Mail: {user_email}.")
