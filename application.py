@@ -315,6 +315,18 @@ def send_emails(word_file_path, excel_file_path, signature_path, user_email, acc
         with lock:
             status_messages.append(f"Ein Fehler ist aufgetreten: {str(e)}")
 
+def clear_upload_folder():
+    for filename in os.listdir(UPLOAD_FOLDER):
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)  # Datei oder symbolischen Link löschen
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)  # Ordner und dessen Inhalt löschen
+        except Exception as e:
+            with lock:
+                status_messages.append(f'Fehler beim Löschen der Datei {file_path}: {e}')
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
@@ -327,6 +339,9 @@ def upload_files():
             status_messages = []
             abort_flag = False  # Reset des Abbruch-Flags
             emails_completed = False  # Reset des Abschluss-Status
+            
+        # Lösche alle Dateien im Upload-Ordner
+        clear_upload_folder()
 
     if request.method == 'POST':
         # Setze abort_flag zurück, bevor ein neuer Upload-Prozess gestartet wird
@@ -413,6 +428,16 @@ def check_complete():
     global emails_completed
     with lock:
         return jsonify({"completed": emails_completed}), 200
+    
+@app.route('/api/reset', methods=['POST'])
+def reset():
+    global progress_percentage, status_messages, abort_flag, emails_completed
+    with lock:  # Thread-Safe Zurücksetzen
+        progress_percentage = 0  # Setze den Fortschritt auf 0 zurück
+        status_messages = []  # Leere die Statusmeldungen
+        abort_flag = False  # Setze das Abbruch-Flag zurück
+        emails_completed = False  # Setze den Abschluss-Status zurück
+    return jsonify({"message": "Fortschritt und Status wurden zurückgesetzt."}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

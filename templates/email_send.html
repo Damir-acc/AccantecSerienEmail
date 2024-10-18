@@ -193,6 +193,13 @@
             document.getElementById("emailForm").reset(); // Setzt alle Formularfelder zurück
             $('#progressBar').css('width', '0%').attr('aria-valuenow', 0).text('0%'); // Setzt den Fortschritt zurück
             $('#statusMessages').empty(); // Setzt die Statusmeldungen zurück
+
+            // Sende eine API-Anfrage zum Löschen des Fortschritts und der Statusmeldungen auf dem Server
+            $.post('/api/reset', function(data) {
+                console.log('Status und Fortschritt wurden zurückgesetzt.');
+            }).fail(function() {
+                console.error('Fehler beim Zurücksetzen des Fortschritts und der Statusmeldungen.');
+            });
         }
 
         function fetchStatusMessages() {
