@@ -4,105 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Mail Versender</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
             background-color: #f4f4f9;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            box-sizing: border-box;
         }
 
         .container {
+            margin-top: 50px;
             background-color: white;
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 1200px;
-            box-sizing: border-box;
-            overflow: auto;
-            margin-top: 20px;
-        }
-
-        h1, h2 {
-            color: #333;
-            text-align: center;
-            margin: 0 0 15px 0;
-            padding-top: 10px;
         }
 
         h1 {
-            font-size: 2rem;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        input[type="text"], input[type="file"] {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        button[type="submit"], button[type="button"] {
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            border: none;
-        }
-
-        button[type="submit"] {
-            background-color: #007bff;
-            color: white;
-        }
-
-        button[type="submit"]:hover {
-            background-color: #0056b3;
-        }
-
-        button[type="button"] {
-            background-color: red;
-            color: white;
-        }
-
-        .progress {
-            background-color: #e9ecef;
-            border-radius: 4px;
-            height: 20px;
+            color: #333;
+            text-align: center;
             margin-bottom: 20px;
         }
 
-        .progress-bar {
-            background-color: #007bff;
-            color: white;
-            text-align: center;
-            height: 100%;
-            border-radius: 4px;
+        .progress {
+            margin-bottom: 20px;
         }
 
         ul {
@@ -115,30 +38,6 @@
         ul li {
             margin-bottom: 10px;
         }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            h2 {
-                font-size: 1.2rem;
-            }
-
-            input[type="text"], input[type="email"], input[type="password"], input[type="file"], button[type="submit"] {
-                font-size: 14px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.2rem;
-            }
-
-            h2 {
-                font-size: 1rem;
-            }
-        }
     </style>
 </head>
 <body>
@@ -147,26 +46,26 @@
         <form id="emailForm" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="word_file">Word-Datei:</label>
-                <input type="file" name="word_file" required>
+                <input type="file" class="form-control" name="word_file" required>
             </div>
             <div class="form-group">
                 <label for="excel_file">Excel-Datei:</label>
-                <input type="file" name="excel_file" required>
+                <input type="file" class="form-control" name="excel_file" required>
             </div>
             <div class="form-group">
                 <label for="signature_file">Signatur-Datei:</label>
-                <input type="file" name="signature_file" required>
+                <input type="file" class="form-control" name="signature_file" required>
             </div>
             <div class="form-group">
                 <label for="logo_file">Logo-Datei:</label>
-                <input type="file" name="logo_file" required>
+                <input type="file" class="form-control" name="logo_file" required>
             </div>
             <div class="form-group">
                 <label for="attachments">Anhänge (optional):</label>
-                <input type="file" name="attachments" multiple>
+                <input type="file" class="form-control" name="attachments" multiple>
             </div>
-            <button type="submit" id="submitButton">E-Mails senden</button>
-            <button type="button" id="abortButton" style="display:none;">Abbrechen</button>
+            <button type="submit" id="submitButton" class="btn btn-primary">E-Mails senden</button>
+            <button type="button" id="abortButton" class="btn btn-danger" style="display:none;">Abbrechen</button>
         </form>
 
         <h2>Fortschritt:</h2>
@@ -261,7 +160,7 @@
                            errorMessage = xhr.responseJSON.error;
                         }
 
-                        // Zeige die Fehlermeldung in den Statusnachrichten an
+                        // Zeige die Fehlermeldung in den Statusmeldungen an
                         $('#statusMessages').empty();  // Lösche alte Statusmeldungen
                         $('#statusMessages').append(`<li class="list-group-item">${errorMessage}</li>`);
 

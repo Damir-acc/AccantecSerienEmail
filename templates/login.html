@@ -2,24 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Microsoft Identity Python Web App: Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Send - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 30px;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 1.2rem;
+        }
+        footer {
+            font-size: 0.8rem;
+            color: #777;
+            margin-top: 20px;
+        }
+        .logo {
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 150px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Microsoft Identity Python Web App</h1>
+    <div class="container">
+        <div class="logo">
+            <img src="https://accantec.de/wp-content/uploads/2019/02/accantec_logo_new-300x125.png" alt="Accantec Logo">
+        </div>
+        <h1>Easy Send - Login</h1>
 
-    {% if user_code %}
-    <ol>
-      <li>To sign in, type <b>{{ user_code }}</b> into
-        <a href='{{ auth_uri }}' target=_blank>{{ auth_uri }}</a>
-        to authenticate.
-      </li>
-      <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
-    </ol>
-    {% else %}
-    <ul><li><a href='{{ auth_uri }}'>Sign In</a></li></ul>
-    {% endif %}
-
-    <hr>
-    <footer style="text-align: right">Microsoft identity platform Web App Sample {{ version }}</footer>
+        {% if user_code %}
+        <ol>
+            <li>To sign in, type <b>{{ user_code }}</b> into
+                <a href='{{ auth_uri }}' target="_blank">{{ auth_uri }}</a> to authenticate.
+            </li>
+            <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
+        </ol>
+        {% else %}
+        <ul>
+            <li><a href='{{ auth_uri }}'><i class="fas fa-sign-in-alt"></i> Sign In</a></li>
+        </ul>
+        {% endif %}
+        <footer>Powered by Microsoft Identity Web App {{ version }}</footer>
+    </div>
 </body>
 </html>

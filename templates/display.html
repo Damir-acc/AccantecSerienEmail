@@ -2,11 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Microsoft Identity Python Web App: API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Send - API Result</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #007bff;
+        }
+        pre {
+            text-align: left;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-    <a href="javascript:window.history.go(-1)">Back</a> <!-- Displayed on top of a potentially large JSON response, so it will remain visible -->
-    <h1>Result of the downstream API Call</h1>
-    <pre>{{ result |tojson(indent=4) }}</pre> <!-- Just a generic json viewer -->
+    <div class="container">
+        <a href="javascript:window.history.go(-1)">&larr; Back</a>
+        <h1>API Call Result</h1>
+        <pre>{{ result | tojson(indent=4) }}</pre>
+    </div>
 </body>
 </html>
