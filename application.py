@@ -339,7 +339,7 @@ def upload_files():
             status_messages = []
             abort_flag = False  # Reset des Abbruch-Flags
             emails_completed = False  # Reset des Abschluss-Status
-            
+
         # Lösche alle Dateien im Upload-Ordner
         clear_upload_folder()
 
@@ -352,8 +352,6 @@ def upload_files():
         excel_file = request.files['excel_file']
         signature_file = request.files['signature_file']
         logo_file = request.files['logo_file']
-        username = request.form['email_user']
-        password = request.form['email_pass']
 
         # Dateien speichern
         word_file_path = os.path.join(UPLOAD_FOLDER, word_file.filename)
