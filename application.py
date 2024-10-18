@@ -74,6 +74,9 @@ def call_downstream_api():
 
 @app.route("/email_send")
 def email_send():
+    if not auth.get_user():
+        return redirect(url_for("login"))  # Weiterleitung zur Login-Seite, falls nicht eingeloggt
+    
     return render_template('email_send.html')
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
