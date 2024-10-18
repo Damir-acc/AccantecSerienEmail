@@ -176,9 +176,6 @@ def get_user_email(access_token):
         headers={'Authorization': 'Bearer ' + access_token['access_token']},
         timeout=30,
     )
-    
-    with lock:
-        status_messages.append(f"Response Status Code: {response.status_code}")
     if response.status_code == 200:
         user_info = response.json()
         if "mail" in user_info:
