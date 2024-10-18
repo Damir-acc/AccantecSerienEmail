@@ -25,11 +25,11 @@
             width: 100%;
         }
         h1 {
-            color: #007bff;
+            color: #777;
             margin-bottom: 30px;
         }
         a {
-            color: #007bff;
+            color: #777;
             text-decoration: none;
             font-size: 1.2rem;
         }
@@ -53,18 +53,9 @@
         </div>
         <h1>Easy Send - Login</h1>
 
-        {% if user_code %}
-        <ol>
-            <li>To sign in, type <b>{{ user_code }}</b> into
-                <a href='{{ auth_uri }}' target="_blank">{{ auth_uri }}</a> to authenticate.
-            </li>
-            <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
-        </ol>
-        {% else %}
         <ul>
             <li><a href='{{ auth_uri }}'><i class="fas fa-sign-in-alt"></i> Sign In</a></li>
         </ul>
-        {% endif %}
         <footer>Powered by Accantec Easy Send Web App {{ version }}</footer>
     </div>
 </body>
