@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
-from flask import Flask, render_template, request, redirect, url_for, jsonify, copy_current_request_context
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import threading  # Für den Thread-Safe-Mechanismus
 import time
 import identity.web
