@@ -303,6 +303,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, user_email, acc
                 progress_percentage = int((index + 1) / total_emails * 100)
                 if response.status_code == 202:
                     status_messages.append(f"E-Mail an {email} erfolgreich gesendet.")
+                    status_messages.append(f"E-Mail {index+1}/{total_emails}")
                 else:
                     status_messages.append(f"Fehler beim Senden der E-Mail an {email}: {response.status_code} - {response.text}")
 
