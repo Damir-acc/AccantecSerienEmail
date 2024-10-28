@@ -8,12 +8,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from docx import Document
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import threading  # Für den Thread-Safe-Mechanismus
 import time
 import identity.web
 import requests
-from flask import Flask, redirect, render_template, request, session, url_for
 from flask_session import Session
 
 import application_config
@@ -134,8 +133,8 @@ def edit_signature(signature_content, logo_cid):
     pattern_img = r'(<img[^>]+src=")[^"]+(")'  # Für den regulären HTML-Bereich
 
     # Ersetze beide Vorkommen des Bildpfades durch die Content-ID (cid)
-    updated_signature = re.sub(pattern_vml, f'\\1cid:{logo_cid}\\2', signature_content)
-    updated_signature = re.sub(pattern_img, f'\\1cid:{logo_cid}\\2', updated_signature)
+    updated_signature = re.sub(pattern_vml, f'\\1cid:{logo_cid}\\2 style="width:150px; height:auto;"', signature_content)
+    updated_signature = re.sub(pattern_img, f'\\1cid:{logo_cid}\\2 style="width:150px; height:auto;"', updated_signature)
 
     return updated_signature
 
