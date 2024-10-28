@@ -205,7 +205,7 @@ def send_emails(word_file_path, excel_file_path, signature_path, user_email, acc
         if missing_columns:
             with lock:
                 status_messages.append(f"Fehlende Spalten in der Excel-Datei: {', '.join(missing_columns)}")
-            return  # Beendet die Funktion, falls Spalten fehlen
+                abort_flag=True  # Beendet die Funktion, falls Spalten fehlen
 
 
         # Content-ID für das Logo definieren (für Einbettung)
