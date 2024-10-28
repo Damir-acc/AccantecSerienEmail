@@ -198,6 +198,16 @@ def send_emails(word_file_path, excel_file_path, signature_path, user_email, acc
         email_data = read_excel_data(excel_file_path)
         signature = load_signature(signature_path)
 
+        # Überprüfen, ob alle benötigten Spalten in der Excel-Liste vorhanden sind
+        required_columns = {'Nachname', 'Vorname', 'Betreff', 'Titel', 'Anrede', 'E-Mail'}
+        missing_columns = required_columns - set(email_data.columns)
+
+        if missing_columns:
+            with lock:
+                status_messages.append(f"Fehlende Spalten in der Excel-Datei: {', '.join(missing_columns)}")
+            return  # Beendet die Funktion, falls Spalten fehlen
+
+
         # Content-ID für das Logo definieren (für Einbettung)
         logo_cid = 'logo_cid'
 
@@ -215,10 +225,13 @@ def send_emails(word_file_path, excel_file_path, signature_path, user_email, acc
 
             nachname = row['Nachname']
             vorname = row['Vorname']
-            betreff = row['BETREFF']
+            betreff = row['Betreff']
             titel = row['Titel']
             salutation = row['Anrede']
             email = row['E-Mail']
+
+            
+
 
             if salutation == "Frau":
                 geehrt = "Sehr geehrte"
