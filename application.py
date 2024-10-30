@@ -398,10 +398,6 @@ def upload_files():
                attachment.save(attachment_path)
                attachment_filenames.append(attachment_filename)
 
-        # SMTP-Server-Einstellungen
-        smtp_server = 'smtp.office365.com'
-        smtp_port = 587
-
         access_token = auth.get_token_for_user(application_config.SCOPE)
         user_email = get_user_email(access_token)
 
