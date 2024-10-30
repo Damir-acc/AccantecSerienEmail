@@ -40,6 +40,28 @@
         ul li {
             margin-bottom: 10px;
         }
+
+        button[type="submit"], button[type="button"] {
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            border: none;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        button[type="button"] {
+            background-color: red;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -66,8 +88,8 @@
                 <label for="attachments">Anhänge (optional):</label>
                 <input type="file" class="form-control" name="attachments" multiple>
             </div>
-            <button type="submit" id="submitButton" class="btn btn-primary">E-Mails senden</button>
-            <button type="button" id="abortButton" class="btn btn-danger" style="display:none;">Abbrechen</button>
+            <button type="submit" id="submitButton">E-Mails senden</button>
+            <button type="button" id="abortButton" style="display:none;">Abbrechen</button>
         </form>
 
         <h2>Fortschritt:</h2>
