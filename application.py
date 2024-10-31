@@ -3,14 +3,9 @@ import re
 import shutil
 import pandas as pd
 import base64
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-from email.mime.image import MIMEImage
 from docx import Document
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import threading  # Für den Thread-Safe-Mechanismus
-import time
 import identity.web
 import requests
 from flask_session import Session
