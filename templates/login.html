@@ -9,54 +9,36 @@
     <script>
         microsoftTeams.initialize();
 
+        // Funktion zum Anzeigen von Fehlermeldungen
+        function showError(message) {
+            const errorDiv = document.getElementById("error-message");
+            errorDiv.textContent = message;  // Setze den Fehlertext
+            errorDiv.style.display = "block";  // Mache den Fehlerbereich sichtbar
+        }
+
         // Funktion zum Abrufen des SSO-Tokens
         function getTeamsToken() {
-        // Überprüfen, ob Teams SDK korrekt geladen wurde
-        if (typeof microsoftTeams !== "undefined") {
-            microsoftTeams.authentication.getAuthToken({
-                successCallback: function (token) {
-                    console.log("SSO Token received: ", token);
-                    sendTokenToBackend(token);
-                },
-                failureCallback: function (error) {
-                    console.log("Error getting SSO token: ", error);
-                    alert("Authentifizierung fehlgeschlagen.");
-                }
-            });
-        } else {
-            console.log("Teams SDK is not available.");
-            alert("Teams SDK ist nicht verfügbar. Stelle sicher, dass du innerhalb von Microsoft Teams arbeitest.");
+            if (typeof microsoftTeams !== "undefined") {
+                microsoftTeams.authentication.getAuthToken({
+                    successCallback: function (token) {
+                        console.log("SSO Token erhalten: ", token);
+                        sendTokenToBackend(token);
+                    },
+                    failureCallback: function (error) {
+                        console.log("Fehler beim Abrufen des SSO-Tokens: ", error);
+                        showError("Fehler beim Abrufen des Tokens. Bitte versuche es erneut.");
+                    }
+                });
+            } else {
+                console.log("Teams SDK ist nicht verfügbar.");
+                showError("Teams SDK ist nicht verfügbar. Stelle sicher, dass du innerhalb von Microsoft Teams arbeitest.");
+            }
         }
-    }
 
-        // Token an das Backend senden
-        function sendTokenToBackend(token) {
-            fetch("/api/auth/teams", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ token: token })
-            }).then(response => {
-                if (response.ok) {
-                    window.location.href = '/';  // Bei erfolgreicher Authentifizierung zur Startseite weiterleiten
-                } else {
-                    console.error("Error sending token to backend");
-                    alert("Fehler bei der Authentifizierung.");
-                }
-            }).catch(error => {
-                console.error("Fetch error:", error);
-                alert("Fehler bei der Kommunikation mit dem Server.");
-            });
-        }
         // Token beim Laden der Seite anfordern
-        //window.onload = function () {
-        //    if (typeof microsoftTeams !== "undefined") {
-        //        getTeamsToken();
-        //    } else {
-        //        console.log("Teams SDK ist nicht verfügbar. Bitte sicherstellen, dass du in einem Teams-Client arbeitest.");
-        //    }
-        //};
+        window.onload = function () {
+            getTeamsToken();
+        };
     </script>
     <style>
         body {
@@ -81,11 +63,37 @@
             color: #777;
             margin-bottom: 30px;
         }
+        a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 1.2rem;
+        }
+        footer {
+            font-size: 0.8rem;
+            color: #777;
+            margin-top: 20px;
+        }
         .logo {
             margin-bottom: 20px;
         }
         .logo img {
             max-width: 150px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label {
+            font-size: 1rem;
+            color: #333;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-top: 5px;
         }
         .btn-login {
             width: 100%;
@@ -101,21 +109,37 @@
         .btn-login:hover {
             background-color: #0056b3;
         }
-        footer {
-            font-size: 0.8rem;
-            color: #777;
-            margin-top: 20px;
+        .forgot-password {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: red;
+            font-size: 1rem;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="logo">
-            <img src="data:image/webp;base64,UklGRsgcAABXRUJQVlA4TLscAAAv84E0EDWH4raRlKT/so8ZXhExAZy1uWPEIwMTDiXjRgAHMQnYZSW+WuPoYAxi7hjkZPd0ntq5/n+V3CYgja2xVnBOdk17pDHtmGnNPqsxaUVj70g+s6uza9jqN7MX5t5f6P0f6c8zuuMb2n+YsWPsOCUzM3MqVWFmxpYZ1MWuwszMaK58UjFzxUnJnOi4dBdm5mRCrsJohypmfAXMzJxXwMz/MDNz0qXkpKEjSZJtKyoJ6V7mz5+VziYQMbThXeHdY8w5GyzPpORIkiNJCncT+/87unJIHmpm+V73QdsYUsAAEigAIJ3oDf+HKa9lt9vllm3btm3btm2ebdvhnG0t40uCJElumxwgQAgE3Ktbi+X6T7f+P0lyIombuY/WxHLRM7O7zWX9uqp4VfXIP5GZ6urZHq6y+KfAHcDaWIqBCJTFpiGbCDDvfYqCMBSGTALBvn3FQk54p4n1C0HmBMDDlsVl4SsMSbbtJpI0r1mPijEZo2J9xZQQ5yRnVTN3Szot6fUWJcm240jV/hdCSAok5R3xTfnC1FqKcu3wDCBBAEBImUO2bdu2bdu2bdvuZ9u2bdu2a90wkuQo9d5Bk3piHcqr1X+t/mv1X6sGltVApjK3AcALd5j518eCJb/5BbQeBrABKANEAbwB0gBxgAjACRAMqABcAf7TGGAakPTcv3vFR999wkbbn/35QIf/RAIuzlJX6ryfps47tP75IAz71w8YP33v/75Sp647cv3rDrFS57120Prng73dX99hgvl7//zKlLru56nzPg+rUuf9ov75sIj+/Q2UaUHvn1/LUtd9EkqlzvtO/fMhEf37G1yyCX1evpS/KnzaSf3zIRl99w2utZZeQiZA+4BHKqrPy5fnqes+D5P+smacrd03sKJG9Hn5wp+67tnwCLBizXRau29wzT2KPi9fIlPXfZSIAPfWLLC1/4bU6MNIPp4/Utd9EQoBiq0Z2Y65T3/9K9j3/Kzxtre9LX1c2sP8/hMUkHw8rVLXfRACATasmUBr/w0s9Z76/A+/pOgAst8H/Fa6Uuf9KH1cwcO8/UnFTZV8PGdS1w2FPWfWLKR9cEOuz6z98SdLSTEHDAN+atpS5/01fVziw7z9CedIPp6Zqes+DnkAPdaMpj6y9sefJn3Pz9dT5328Q90t08elFbm/EGzJx5Mpdd17oQ7g2ZqZto9ucFKj9vufQN/zc+CctxT85TJ9XLyceMnH88V/QxxArTWjquur/f4nU9/zc1DqvGfeI1zp43oWub8wbMnHM+rwoQ3gxZqZ1e0t3leQkuLzt/fIVPq4LCP3F5Ip+Xhqp657P6wB9Fozupq24n0FU1Lsf+B7pKSPaypyf9ExJR9PgdR1U0Iaa+bROb4iSlzxWsmWlF1uB3Wb5OO5c5EwBrDjVFlrworXiqmkdB54eunjuh65v9Bhj1PN6p5c0CXqZFuDS4o34IlsQPq4LiL3FwNT8vG8kbrus9AFcOFU1bonFxiJOtnWfCVl8oLNDB+J3F7wlANocKq0NVElJQPwTjMRsBvAoYBp2e1x4mkPb8lZ/gLpb/+M8A2Gyb2D2+R/U3DrAMMAWaVBHrLgMcLwwDez5TvVA2Cy2Pv7mTxZlQAAA==" alt="Easy Send">
+            <img src="data:image/webp;base64,UklGRsgcAABXRUJQVlA4TLscAAAv84E0EDWH4raRlKT/so8ZXhExAZy1uWPEIwMTDiXjRgAHMQnYZSW+WuPoYAxi7hjkZPd0ntq5/n+V3CYgja2xVnBOdk17pDHtmGnNPqsxaUVj70g+s6uza9jqN7MX5t5f6P0f6c8zuuMb2n+YsWPsOCUzM3MqVWFmxpYZ1MWuwszMaK58UjFzxUnJnOi4dBdm5mRCrsJohypmfAXMzJxXwMz/MDNz0qXkpKEjSZJtKyoJ6V7mz5+VziYQMbThXeHdY8w5GyzPpORIkiNJCncT+/87unJIHmpm+V73QdsYUsAAEigAIJ3oDf+HKa9lt9vllm3btm3btm2ebdvhnG0t40uCJElumxwgQAgE3Ktbi+X6T7f+P0lyIombuY/WxHLRM7O7zWX9uqp4VfXIP5GZ6urZHq6y+KfAHcDaWIqBCJTFpiGbCDDvfYqCMBSGTALBvn3FQk54p4n1C0HmBMDDlsVl4SsMSbbtJpI0r1mPijEZo2J9xZQQ5yRnVTN3Szot6fUWJcm240jV/hdCSAok5R3xTfnC1FqKcu3wDCBBAEBImUO2bdu2bdu2bdvuZ9u2bdu2a90wkuQo9d5Bk3piHcqr1X+t/mv1X6sGltVApjK3AcALd5j518eCJb/5BbQeBrABKANEAbwB0gBxgAjACRAMqABcAf7TGGAakPTcv3vFR999wkbbn/35QIf/RAIuzlJX6ryfps47tP75IAz71w8YP33v/75Sp647cv3rDrFS57120Prng73dX99hgvl7//zKlLru56nzPg+rUuf9ov75sIj+/Q2UaUHvn1/LUtd9EkqlzvtO/fMhEf37G1yyCX1evpS/KnzaSf3zIRl99w2utZZeQiZA+4BHKqrPy5fnqes+D5P+smacrd03sKJG9Hn5wp+67tnwCLBizXRau29wzT2KPi9fIlPXfZSIAPfWLLC1/4bU6MNIPp4/Utd9EQoBiq0Z2Y65T3/9K9j3/Kzxtre9LX1c2sP8/hMUkHw8rVLXfRACATasmUBr/w0s9Z76/A+/pOgAst8H/Fa6Uuf9KH1cwcO8/UnFTZV8PGdS1w2FPWfWLKR9cEOuz6z98SdLSTEHDAN+atpS5/01fVziw7z9CedIPp6Zqes+DnkAPdaMpj6y9sefJn3Pz9dT5328Q90t08elFbm/EGzJx5Mpdd17oQ7g2ZqZto9ucFKj9vufQN/zc+CctxT85TJ9XLyceMnH88V/QxxArTWjquur/f4nU9/zc1DqvGfeI1zp43oWub8wbMnHM+rwoQ3gxZqZ1e0t3leQkuLzt/fIVPq4LCP3F5Ip+Xhqp657P6wB9Fozupq24n0FU1Lsf+B7pKSPaypyf9ExJR9PgdR1U0Iaa+bROb4iSlzxWsmWlF1uB3Wb5OO5c5EwBrDjVFlrworXiqmkdB54eunjuh65v9Bhj1PN6p5c0CXqZFuDS4o34IlsQPq4LiL3FwNT8vG8kbrus9AFcOFU1bonFxiJOtnWfCVl8oLNDB+J3F7wlANocKq0NVElJQPwTjMRsBvAoYBp2e1x4mkzH6jW3gD6mlgec3KHxlf5d9Y2k4PY7c8z3dfodwDjmY9jw5AelLssYtw2hRDeQDbFxpTk17b8dksqgF4Qm9oXq9cXUlzfp0B2nFakbPz6P3mJQGVt5Rp82yDEs8B0gjiHs8JX9Zgpp5WxT2OGlP52FzAl6Q==">
         </div>
-        <h1>Login to Easy Send</h1>
-        <button class="btn-login" onclick="getTeamsToken()">Login with Microsoft Teams</button>
-        <footer>&copy; 2024 Easy Send. All rights reserved.</footer>
+        <h1>Willkommen bei Easy Send!</h1>
+        <p>Logge dich mit deinem Microsoft Teams-Konto ein.</p>
+        
+        <!-- Fehlermeldung anzeigen -->
+        <div id="error-message" style="color: red; display: none; font-size: 1rem; margin-top: 10px;"></div>
+
+        <button class="btn-login" onclick="getTeamsToken()">Login mit Microsoft Teams</button>
+
+        <footer>
+            <p><a href="#">Passwort vergessen?</a></p>
+        </footer>
     </div>
 </body>
 </html>
