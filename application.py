@@ -31,15 +31,25 @@ def auth_response():
     result = auth.complete_log_in(request.args)
     if "error" in result:
         return render_template("auth_error.html", result=result)
+
+    # Teams-spezifischer Redirect
+    if request.args.get("state") == "teams":
+        return render_template("teams_auth_complete.html", result=result)  # Teams Auth Handling
+
+    # Standard-Redirect nach der Authentifizierung
     return redirect(url_for("index"))
 
 @app.route("/login")
 def login():
+    login_hint = request.args.get("login_hint", "")
+    domain_hint = request.args.get("domain_hint", "")
     return render_template("login.html", version='1.0', **auth.log_in(
-        scopes=application_config.SCOPE, # Have user consent to scopes during log-in
-        redirect_uri=url_for("auth_response", _external=True, _scheme="https"), # Optional. If present, this absolute URL must match your app's redirect_uri registered in Microsoft Entra admin center
-        prompt="select_account",  # Optional.
-        ))
+        scopes=application_config.SCOPE,
+        redirect_uri=url_for("auth_response", _external=True, _scheme="https"),
+        prompt="select_account",
+        login_hint=login_hint,
+        domain_hint=domain_hint  # Teams verwendet diese Parameter, um den Tenant vorzuschlagen
+    ))
 
 @app.route("/logout")
 def logout():
@@ -72,6 +82,29 @@ def email_send():
         return redirect(url_for("login"))  # Weiterleitung zur Login-Seite, falls nicht eingeloggt
     
     return render_template('email_send.html')
+
+@app.route("/api/auth/teams", methods=['POST'])
+def teams_auth():
+    try:
+        # Der Token, der vom Teams-Client übermittelt wurde
+        teams_token = request.json.get('token')
+
+        # Verwende Microsoft Graph, um den Token zu validieren und Benutzerinformationen abzurufen
+        graph_api_url = "https://graph.microsoft.com/v1.0/me"
+        headers = {'Authorization': f'Bearer {teams_token}'}
+
+        response = requests.get(graph_api_url, headers=headers)
+        if response.status_code == 200:
+            user_info = response.json()
+            user_email = user_info.get('mail', user_info.get('userPrincipalName'))
+            # Du könntest hier den Benutzer authentifizieren und eine Sitzung starten
+            # session['user'] = user_email
+            return jsonify({"message": "Authentication successful", "user": user_email}), 200
+        else:
+            return jsonify({"error": "Invalid token"}), 401
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Neue Variable zur Verfolgung des Fortschritts und Thread-Safety
 progress_percentage = 0
