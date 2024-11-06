@@ -11,6 +11,8 @@
 
         // Funktion zum Abrufen des SSO-Tokens
         function getTeamsToken() {
+        // Überprüfen, ob Teams SDK korrekt geladen wurde
+        if (typeof microsoftTeams !== "undefined") {
             microsoftTeams.authentication.getAuthToken({
                 successCallback: function (token) {
                     console.log("SSO Token received: ", token);
@@ -21,7 +23,11 @@
                     alert("Authentifizierung fehlgeschlagen.");
                 }
             });
+        } else {
+            console.log("Teams SDK is not available.");
+            alert("Teams SDK ist nicht verfügbar. Stelle sicher, dass du innerhalb von Microsoft Teams arbeitest.");
         }
+    }
 
         // Token an das Backend senden
         function sendTokenToBackend(token) {
@@ -43,11 +49,14 @@
                 alert("Fehler bei der Kommunikation mit dem Server.");
             });
         }
-
         // Token beim Laden der Seite anfordern
-        window.onload = function () {
-            getTeamsToken();
-        };
+        //window.onload = function () {
+        //    if (typeof microsoftTeams !== "undefined") {
+        //        getTeamsToken();
+        //    } else {
+        //        console.log("Teams SDK ist nicht verfügbar. Bitte sicherstellen, dass du in einem Teams-Client arbeitest.");
+        //    }
+        //};
     </script>
     <style>
         body {
