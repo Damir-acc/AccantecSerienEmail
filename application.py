@@ -41,14 +41,10 @@ def auth_response():
 
 @app.route("/login")
 def login():
-    login_hint = request.args.get("login_hint", "")
-    domain_hint = request.args.get("domain_hint", "")
     return render_template("login.html", version='1.0', **auth.log_in(
         scopes=application_config.SCOPE,
         redirect_uri=url_for("auth_response", _external=True, _scheme="https"),
         prompt="select_account",
-        login_hint=login_hint,
-        domain_hint=domain_hint  # Teams verwendet diese Parameter, um den Tenant vorzuschlagen
     ))
 
 @app.route("/logout")
